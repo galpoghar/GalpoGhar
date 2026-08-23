@@ -47,6 +47,19 @@ footer{background:#101722;color:#ddd;margin-top:50px;padding:35px 18px;text-alig
 
 
 <style>
+/* গল্পঘর — episode picker */
+#ggEpisodePicker{display:none;position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:9999;padding:18px;overflow:auto;box-sizing:border-box}
+#ggEpisodePicker .gg-episode-modal{max-width:760px;margin:6vh auto;background:#fff;border-radius:20px;padding:22px;box-shadow:0 18px 60px #0005}
+#ggEpisodePicker .gg-episode-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+#ggEpisodePicker .gg-episode-head h2{margin:0;color:#30251f}
+#ggEpisodePicker .gg-episode-close{border:0;background:#eee;border-radius:50%;width:40px;height:40px;font-size:22px;cursor:pointer}
+#ggEpisodePicker .gg-episode-list{display:grid;gap:10px}
+#ggEpisodePicker .gg-episode-item{width:100%;box-sizing:border-box;border:1px solid #eadfce;background:#fffaf5;border-radius:14px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;text-align:left;cursor:pointer}
+#ggEpisodePicker .gg-episode-item:hover{border-color:#c8942b;background:#fff7e6}
+#ggEpisodePicker .gg-episode-name{font-weight:700;color:#30251f}
+#ggEpisodePicker .gg-episode-meta{font-size:13px;color:#75665c;margin-top:4px}
+@media(max-width:600px){#ggEpisodePicker{padding:10px}#ggEpisodePicker .gg-episode-modal{margin:3vh auto;padding:16px}.gg-episode-item{padding:12px!important}}
+
 /* গল্পঘর — compact story carousel */
 #publicEpisodes{
   display:flex;
@@ -187,7 +200,7 @@ window.ggCommentLoad = function(key){
 <div class="hero-copy"><div class="eyebrow">📖 আজকের নির্বাচিত গল্প</div>
 <h1>সোনালী বিকেলের চিঠি</h1>
 <p>কিছু চিঠি কখনও পৌঁছায় না ঠিকানায়, তবুও তারা ছুঁয়ে যায় হৃদয়ের গভীরে...</p>
-<a class="btn primary" href="#read" onclick="showReader('gg_original_ep1');return false;">গল্পটি পড়ুন</a><a class="btn ghost" href="#episodes">পর্বগুলো দেখুন</a>
+<a class="btn primary" href="#read" onclick="showReader('gg_original_ep1');return false;">গল্পটি পড়ুন</a><a class="btn ghost" href="#episodes" onclick="openEpisodePicker();return false;">পর্বগুলো দেখুন</a>
 </div></div></div>
 
 <section id="stories"><div class="section-title"><h2>⭐ জনপ্রিয় গল্পসমূহ</h2></div>
@@ -374,6 +387,16 @@ window.ggCommentLoad = function(key){
   </div>
 </section>
 <div id="commentCloudSetup" style="max-width:900px;margin:20px auto;padding:18px;display:none" class="card"><h3>💬 মন্তব্য Cloud Setup</h3><p style="font-size:13px;color:#666">Supabase-এ <b>golpo_ghor_comments</b> table তৈরি না থাকলে মন্তব্য Cloud-এ যাবে না।</p><textarea readonly style="width:100%;min-height:150px;font-family:monospace">create table public.golpo_ghor_comments (id text primary key, story_id text not null, name text not null, comment text not null, created_at timestamptz default now(), likes integer default 0); alter table public.golpo_ghor_comments enable row level security; create policy "public read comments" on public.golpo_ghor_comments for select using (true); create policy "public insert comments" on public.golpo_ghor_comments for insert with check (true); create policy "public delete comments" on public.golpo_ghor_comments for delete using (true);</textarea></div>
+<div id="ggEpisodePicker" onclick="if(event.target===this)closeEpisodePicker()">
+  <div class="gg-episode-modal">
+    <div class="gg-episode-head">
+      <h2 id="ggEpisodePickerTitle">📚 সব পর্ব</h2>
+      <button type="button" class="gg-episode-close" onclick="closeEpisodePicker()" aria-label="বন্ধ করুন">×</button>
+    </div>
+    <div id="ggEpisodePickerList" class="gg-episode-list"></div>
+  </div>
+</div>
+
 <footer id="contact"><b>গল্প ঘর</b><br>যেখানে প্রতিটি গল্পের একটি নতুন পৃথিবী।<br><small>© 2026 গল্প ঘর — সর্বস্বত্ব সংরক্ষিত</small></footer>
 
 
@@ -919,6 +942,50 @@ function sortEpisodes(a){
 function renderAdminStories(){const box=document.getElementById('adminStoryList'),a=sortEpisodes(getStories());if(!a.length){box.innerHTML='<div style="padding:15px;color:#777">এখনও কোনো নতুন পর্ব সংরক্ষিত নেই।</div>';return}box.innerHTML=a.map(x=>`<div style="padding:14px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap"><div>${x.image?`<img src="${escapeAttr(x.image)}" style="width:44px;height:44px;object-fit:cover;border-radius:8px;vertical-align:middle;margin-right:8px">`:''}<b>${escapeHtml(x.title)}</b> — ${escapeHtml(x.episode)} <span class="${x.access==='free'?'free':'lock'}">${x.access==='free'?'🆓 Free':'🔒 Premium'}</span>${x.price?` • ₹${escapeHtml(x.price)}`:''}${x.audio?' • 🎧 Audio':''}</div><div><button class="btn ghost" onclick="editStory('${encodeURIComponent(x.id)}')">✏️ Edit</button> <button class="btn ghost" style="background:#b42318;color:#fff" onclick="deleteStory('${x.id}')">🗑️ Delete</button></div></div>`).join('')}
 function escapeAttr(v){return String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;',"\"":'&quot;'}[c]))}
 
+function closeEpisodePicker(){
+  const m=document.getElementById('ggEpisodePicker');
+  if(m)m.style.display='none';
+  document.body.style.overflow='';
+}
+function openEpisodePicker(title){
+  const all=getStories();
+  if(!all.length){alert('এখনও কোনো পর্ব প্রকাশিত হয়নি।');return;}
+  const groups=new Map();
+  all.forEach(function(s){
+    const key=String(s.title||'').trim().toLowerCase();
+    if(!key)return;
+    if(!groups.has(key))groups.set(key,[]);
+    groups.get(key).push(s);
+  });
+  const keys=Array.from(groups.keys());
+  let selectedKey=title ? String(title).trim().toLowerCase() : '';
+  if(!selectedKey || !groups.has(selectedKey)){
+    selectedKey=keys[0];
+  }
+  const list=document.getElementById('ggEpisodePickerList');
+  const heading=document.getElementById('ggEpisodePickerTitle');
+  if(!list||!heading)return;
+  const episodes=sortEpisodes(groups.get(selectedKey)||[]);
+  const selectedTitle=episodes[0] ? episodes[0].title : 'গল্প';
+  heading.textContent='📚 '+selectedTitle+' — সব পর্ব';
+  list.innerHTML=episodes.map(function(x){
+    const locked=x.access==='premium' && !premiumIsActive();
+    return '<button type="button" class="gg-episode-item" data-episode-id="'+escapeAttr(encodeURIComponent(String(x.id)))+'">'+
+      '<span><span class="gg-episode-name">'+escapeHtml(x.episode||'পর্ব')+'</span><span class="gg-episode-meta">'+
+      (locked?'🔒 Premium — সাবস্ক্রিপশন প্রয়োজন':(x.audio?'🎧 Audio সহ • ফ্রি':'🆓 ফ্রি পড়ুন'))+
+      '</span></span><span style="font-weight:700;color:#8a5a00">'+(locked?'🔒':'পড়ুন →')+'</span></button>';
+  }).join('');
+  list.querySelectorAll('.gg-episode-item').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      const id=decodeURIComponent(this.dataset.episodeId||'');
+      closeEpisodePicker();
+      showReader(id);
+    });
+  });
+  const modal=document.getElementById('ggEpisodePicker');
+  if(modal){modal.style.display='block';document.body.style.overflow='hidden';}
+}
+
 function renderPublicEpisodes(){
   const box=document.getElementById('publicEpisodes'); if(!box)return;
   const views=getStoryViews();
@@ -951,10 +1018,12 @@ function renderPublicEpisodes(){
     const locked=x.access==='premium' && !premiumIsActive();
     const isMost=x.id===mostReadId;
     const count=storyTitleViews(x);
-    const encodedId=encodeURIComponent(String(x.id));
-    const action=locked
-      ? '<button class="btn ghost story-open-btn" type="button" data-story-id="'+encodedId+'">🔒 খুলুন</button>'
-      : '<button class="story-card-action story-open-btn" type="button" data-story-id="'+encodedId+'">পড়ুন →</button>';
+    const encodedTitle=encodeURIComponent(String(x.title||''));
+    const encodedId=encodeURIComponent(String(x.id||''));
+    const action='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">'+
+      '<button class="story-card-action" type="button" data-story-id="'+encodedId+'">📖 গল্পটি পড়ুন →</button>'+
+      '<button class="story-card-action story-episodes-btn" type="button" data-story-title="'+encodedTitle+'">📚 সব পর্ব</button>'+
+      '</div>';
     const img=x.image
       ? '<img class="story-card-image" src="'+escapeAttr(x.image)+'" alt="'+escapeAttr(x.title)+'">'
       : '<div class="story-card-image"></div>';
@@ -968,12 +1037,24 @@ function renderPublicEpisodes(){
       +action+'</div></div>';
   }).join('');
 
-  document.querySelectorAll('#publicEpisodes .story-open-btn').forEach(function(btn){
+  document.querySelectorAll('#publicEpisodes [data-story-id]').forEach(function(btn){
     if(btn.dataset.bound==='1')return;
     btn.dataset.bound='1';
-    btn.addEventListener('click',function(){
+    btn.addEventListener('click',function(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
       const id=decodeURIComponent(this.dataset.storyId||'');
-      showReader(id);
+      if(id) showReader(id);
+    });
+  });
+  document.querySelectorAll('#publicEpisodes .story-episodes-btn').forEach(function(btn){
+    if(btn.dataset.bound==='1')return;
+    btn.dataset.bound='1';
+    btn.addEventListener('click',function(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+      const title=decodeURIComponent(this.dataset.storyTitle||'');
+      openEpisodePicker(title);
     });
   });
   setTimeout(initStoryCarousel,30);
