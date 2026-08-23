@@ -388,6 +388,7 @@ window.ggCommentLoad = function(key){
     <div id="adminStoryList"></div>
   </div>
 </section>
+<div id="commentCloudSetup" style="max-width:900px;margin:20px auto;padding:18px;display:none" class="card"><h3>💬 মন্তব্য Cloud Setup</h3><p style="font-size:13px;color:#666">Supabase-এ <b>golpo_ghor_comments</b> table তৈরি না থাকলে মন্তব্য Cloud-এ যাবে না।</p><textarea readonly style="width:100%;min-height:150px;font-family:monospace">create table public.golpo_ghor_comments (id text primary key, story_id text not null, name text not null, comment text not null, created_at timestamptz default now(), likes integer default 0); alter table public.golpo_ghor_comments enable row level security; create policy "public read comments" on public.golpo_ghor_comments for select using (true); create policy "public insert comments" on public.golpo_ghor_comments for insert with check (true); create policy "public delete comments" on public.golpo_ghor_comments for delete using (true);</textarea></div>
 <footer id="contact"><b>গল্প ঘর</b><br>যেখানে প্রতিটি গল্পের একটি নতুন পৃথিবী।<br><small>© 2026 গল্প ঘর — সর্বস্বত্ব সংরক্ষিত</small></footer>
 
 
@@ -661,118 +662,77 @@ function ggEsc(s){
   });
 }
 function storyCommentKey(storyId){
-  return 'ggStoryCommentsV1_'+String(storyId||'unknown');
+  return 'ggStoryCommentsV2_'+String(storyId||'unknown');
 }
 function getStoryComments(storyId){
   try{
     const a=JSON.parse(localStorage.getItem(storyCommentKey(storyId))||'[]');
     return Array.isArray(a)?a:[];
-  }catch(e){return[];}
+  }catch(e){
+    return (window.__GG_COMMENTS__&&Array.isArray(window.__GG_COMMENTS__[storyCommentKey(storyId)]))
+      ? window.__GG_COMMENTS__[storyCommentKey(storyId)] : [];
+  }
 }
 function setStoryComments(storyId,a){
-  localStorage.setItem(storyCommentKey(storyId),JSON.stringify(a));
+  const key=storyCommentKey(storyId);
+  try{localStorage.setItem(key,JSON.stringify(a));}
+  catch(e){window.__GG_COMMENTS__=window.__GG_COMMENTS__||{};window.__GG_COMMENTS__[key]=a;}
 }
 function renderStoryComments(storyId){
-  const wrap=document.getElementById('storyComments');
-  const list=document.getElementById('storyCommentsList');
+  const wrap=document.getElementById('storyComments'), list=document.getElementById('storyCommentsList');
   if(!wrap||!list)return;
-  if(!storyId){
-    wrap.style.display='none';
-    return;
-  }
+  if(!storyId){wrap.style.display='none';return;}
   wrap.style.display='block';
   const a=getStoryComments(storyId);
-  if(!a.length){
-    list.innerHTML='<div style="padding:10px 0;color:#877b70">এই গল্পে এখনও কোনো মন্তব্য নেই।</div>';
-    return;
-  }
-  list.innerHTML=a.slice(0,30).map(function(x){
+  if(!a.length){list.innerHTML='<div style="padding:10px 0;color:#877b70">এই গল্পে এখনও কোনো মন্তব্য নেই।</div>';return;}
+  list.innerHTML=a.slice(0,30).map(function(x,i){
     const when=x.createdAt?new Date(x.createdAt).toLocaleString('bn-IN'):'';
     return '<div style="padding:12px 0;border-bottom:1px solid #eadfd2">'
-      +'<div style="display:flex;justify-content:space-between;gap:10px"><strong>'+ggEsc(x.name)+'</strong><small style="color:#8b8177">'+ggEsc(when)+'</small></div>'
-      +'<div style="margin-top:6px;line-height:1.55">'+ggEsc(x.text)+'</div>'
+      +'<div style="display:flex;justify-content:space-between;gap:10px"><strong>'+ggEsc(x.name||'পাঠক')+'</strong><small style="color:#8b8177">'+ggEsc(when)+'</small></div>'
+      +'<div style="margin-top:6px;line-height:1.55">'+ggEsc(x.text||'')+'</div>'
       +'<button type="button" style="margin-top:7px;border:0;background:none;padding:0;color:#6d5a45;cursor:pointer" onclick="likeStoryComment(\''+ggEsc(x.id)+'\',\''+ggEsc(storyId)+'\')">♡ ভালো লেগেছে '+Number(x.likes||0)+'</button>'
       +'</div>';
   }).join('');
 }
 function likeStoryComment(commentId,storyId){
-  const a=getStoryComments(storyId);
-  const x=a.find(function(c){return c.id===commentId;});
-  if(!x)return;
-  x.likes=Number(x.likes||0)+1;
-  setStoryComments(storyId,a);
-  renderStoryComments(storyId);
+  const a=getStoryComments(storyId), x=a.find(c=>c.id===commentId); if(!x)return;
+  x.likes=Number(x.likes||0)+1; setStoryComments(storyId,a); renderStoryComments(storyId);
 }
-
-function submitStoryComment(e){
-  if(e){try{e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();}catch(x){}}
-
-  var status=document.getElementById('storyCommentStatus');
-  var name=document.getElementById('storyCommentName');
-  var text=document.getElementById('storyCommentText');
-  var storyId=String(window.currentStoryId||'');
-
-  if(!status||!name||!text){
-    if(status)status.textContent='❌ মন্তব্য ফর্ম পাওয়া যায়নি।';
-    return false;
-  }
-
-  var n=String(name.value||'').trim();
-  var t=String(text.value||'').trim();
-
-  if(!n){
-    status.textContent='❌ আপনার নাম লিখুন।';
-    name.focus();
-    return false;
-  }
-  if(!t){
-    status.textContent='❌ আপনার মন্তব্য লিখুন।';
-    text.focus();
-    return false;
-  }
-
-  var key='ggStoryCommentsV1_'+(storyId||'unknown');
-  var comments=[];
-
+async function submitStoryComment(e){
+  if(e){try{e.preventDefault();e.stopPropagation();}catch(x){}}
+  const status=document.getElementById('storyCommentStatus');
+  const name=document.getElementById('storyCommentName');
+  const text=document.getElementById('storyCommentText');
+  const storyId=String(window.currentStoryId||'');
+  if(!status||!name||!text)return false;
+  const n=String(name.value||'').trim(), t=String(text.value||'').trim();
+  if(!storyId){status.textContent='❌ গল্পের ID পাওয়া যায়নি।';return false;}
+  if(!n){status.textContent='❌ আপনার নাম লিখুন।';name.focus();return false;}
+  if(!t){status.textContent='❌ আপনার মন্তব্য লিখুন।';text.focus();return false;}
+  const btn=document.getElementById('storyCommentSubmit');
+  if(btn){btn.disabled=true;btn.textContent='⏳ মন্তব্য পাঠানো হচ্ছে...';}
+  const row={id:'comment_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),storyId,name:n,text:t,createdAt:new Date().toISOString(),likes:0};
+  let savedCloud=false;
   try{
-    comments=JSON.parse(localStorage.getItem(key)||'[]');
-    if(!Array.isArray(comments))comments=[];
-  }catch(x){
-    comments=[];
-  }
-
-  comments.unshift({
-    id:'comment_'+Date.now(),
-    storyId:storyId,
-    name:n,
-    text:t,
-    createdAt:new Date().toISOString(),
-    likes:0
-  });
-
-  try{
-    localStorage.setItem(key,JSON.stringify(comments));
-  }catch(x){
-    // If storage is unavailable, keep it in memory for the current page.
-    window.__GG_COMMENTS__=window.__GG_COMMENTS__||{};
-    window.__GG_COMMENTS__[key]=comments;
-  }
-
-  name.value='';
-  text.value='';
-  status.textContent='✅ মন্তব্য পাঠানো হয়েছে।';
-  status.style.color='#16803c';
-
-  try{renderStoryComments(storyId);}catch(x){}
-
-  setTimeout(function(){
-    try{showHome();}catch(x){}
-  },1000);
-
+    const c=getCloudConfig();
+    if(c){
+      const r=await fetch(c.url+'/rest/v1/golpo_ghor_comments',{
+        method:'POST',
+        headers:{'apikey':c.key,'Authorization':'Bearer '+c.key,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body:JSON.stringify({id:row.id,story_id:storyId,name:n,comment:t,created_at:row.createdAt,likes:0})
+      });
+      if(r.ok)savedCloud=true;
+    }
+  }catch(x){}
+  const comments=getStoryComments(storyId); comments.unshift(row); setStoryComments(storyId,comments);
+  name.value=''; text.value='';
+  status.textContent=savedCloud?'✅ মন্তব্য পাঠানো হয়েছে এবং Cloud-এ সেভ হয়েছে।':'✅ মন্তব্য পাঠানো হয়েছে।';
+  status.style.color='#16803c'; renderStoryComments(storyId);
+  if(btn){btn.disabled=false;btn.textContent='💬 মন্তব্য পাঠান';}
+  setTimeout(function(){try{showHome();}catch(x){}},1000);
   return false;
 }
 window.submitStoryComment=submitStoryComment;
-
 function initReaderComments(){}
 function initStoryComments(){}
 function initStoryCarousel(){
@@ -858,6 +818,7 @@ function showHome(fromBack){
 }
 function openAdmin(){
   renderPendingPayments();
+  try{renderAdminComments();}catch(e){}
   const m=document.getElementById('adminLoginModal');
   const p=document.getElementById('adminLoginPassword');
   const st=document.getElementById('adminLoginStatus');
@@ -1210,36 +1171,50 @@ window.renderStoryRating=function(id){
  const avg=a.length?a.reduce(function(s,x){return s+Number(x.rating||0)},0)/a.length:0;
  if(st)st.textContent=avg?('⭐ '+avg.toFixed(1)+' / 5 • '+a.length+'টি রেটিং'):'এখনও কোনো রেটিং নেই';
 };
-window.adminDeleteStoryComment=function(storyId,index){
- if(!confirm('এই মন্তব্যটি ডিলিট করবেন?'))return;
- const key='ggStoryCommentsV1_'+String(storyId||'unknown');
- try{
-   const a=JSON.parse(localStorage.getItem(key)||'[]');
-   a.splice(Number(index),1);localStorage.setItem(key,JSON.stringify(a));
-   if(typeof renderStoryComments==='function')renderStoryComments(storyId);
-   if(typeof renderAdminComments==='function')renderAdminComments();
- }catch(e){alert('মন্তব্য ডিলিট করা যায়নি।')}
+window.adminDeleteStoryComment=async function(storyId,index){
+  if(!confirm('এই মন্তব্যটি ডিলিট করবেন?'))return;
+  const a=getStoryComments(storyId), item=a[Number(index)];
+  if(!item)return;
+  try{
+    const c=getCloudConfig();
+    if(c && item.id){
+      await fetch(c.url+'/rest/v1/golpo_ghor_comments?id=eq.'+encodeURIComponent(item.id),{
+        method:'DELETE',headers:{'apikey':c.key,'Authorization':'Bearer '+c.key,'Prefer':'return=minimal'}
+      });
+    }
+  }catch(e){}
+  a.splice(Number(index),1); setStoryComments(storyId,a);
+  if(typeof renderStoryComments==='function')renderStoryComments(storyId);
+  if(typeof renderAdminComments==='function')renderAdminComments();
 };
-})();</script>
+})();
+</script>
 
 <script>
-function renderAdminComments(){
+async function renderAdminComments(){
  const box=document.getElementById('adminCommentsList');if(!box)return;
  const stories=getStories(),out=[];
+ let cloud=[];
+ try{
+   const c=getCloudConfig();
+   if(c){
+     const r=await fetch(c.url+'/rest/v1/golpo_ghor_comments?select=*&order=created_at.desc',{headers:{'apikey':c.key,'Authorization':'Bearer '+c.key,'Accept':'application/json'}});
+     if(r.ok)cloud=await r.json();
+   }
+ }catch(e){}
+ const cloudByStory={}; cloud.forEach(c=>{(cloudByStory[c.story_id]||(cloudByStory[c.story_id]=[])).push({id:c.id,storyId:c.story_id,name:c.name,text:c.comment,createdAt:c.created_at,likes:c.likes||0});});
  stories.forEach(function(s){
-  let a=[];try{a=JSON.parse(localStorage.getItem('ggStoryCommentsV1_'+String(s.id))||'[]')}catch(e){}
-  a.forEach(function(c,i){
-   const wrap=document.createElement('div');wrap.style.cssText='padding:10px;border-bottom:1px solid #eee';
-   const name=document.createElement('b');name.textContent=c.name||'পাঠক';wrap.appendChild(name);
-   const text=document.createElement('div');text.textContent=c.text||c.comment||'';wrap.appendChild(text);
-   const btn=document.createElement('button');btn.type='button';btn.className='btn ghost';btn.style.marginTop='6px';btn.textContent='🗑️ মন্তব্য Delete';
-   btn.onclick=function(){adminDeleteStoryComment(s.id,i)};
-   wrap.appendChild(btn);out.push(wrap);
-  });
+   let a=cloudByStory[s.id];
+   if(!a||!a.length)a=getStoryComments(s.id);
+   a.forEach(function(c,i){
+    const wrap=document.createElement('div');wrap.style.cssText='padding:10px;border-bottom:1px solid #eee';
+    const name=document.createElement('b');name.textContent=c.name||'পাঠক';wrap.appendChild(name);
+    const text=document.createElement('div');text.textContent=c.text||c.comment||'';wrap.appendChild(text);
+    const btn=document.createElement('button');btn.type='button';btn.className='btn ghost';btn.style.marginTop='6px';btn.textContent='🗑️ মন্তব্য Delete';
+    btn.onclick=function(){adminDeleteStoryComment(s.id,i)};wrap.appendChild(btn);out.push(wrap);
+   });
  });
- box.innerHTML='';
- if(!out.length){box.textContent='কোনো মন্তব্য নেই।';return;}
- out.forEach(function(x){box.appendChild(x)});
+ box.innerHTML=''; if(!out.length){box.textContent='কোনো মন্তব্য নেই।';return;} out.forEach(x=>box.appendChild(x));
 }</script>
 
 
