@@ -210,22 +210,7 @@ window.ggCommentLoad = function(key){
 
 
 
-<div id="storyComments" style="display:none;margin-top:24px">
-  <div class="card" style="padding:20px">
-    <h3>💬 এই গল্পটি সম্পর্কে আপনার মন্তব্য</h3>
-    <div id="storyCommentsList"></div>
-    <div style="margin-top:14px">
-      <input id="storyCommentName"
-        style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #d8cec3;border-radius:10px;margin-bottom:10px"
-        placeholder="আপনার নাম">
-      <textarea id="storyCommentText"
-        style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #d8cec3;border-radius:10px;min-height:85px;font-family:inherit"
-        placeholder="গল্পটি পড়ে আপনার মতামত লিখুন..."></textarea>
-      <button id="storyCommentSubmit" class="btn primary" type="button" onclick="return window.submitStoryComment(event)" style="margin-top:8px;width:100%">💬 মন্তব্য পাঠান</button>
-      <div id="storyCommentStatus" style="margin-top:8px;font-weight:700"></div>
-    </div>
-  </div>
-</div>
+
 
 <section id="premium">
 <div class="card" style="padding:28px;background:#111c2b;color:#fff">
@@ -700,36 +685,48 @@ function likeStoryComment(commentId,storyId){
 }
 async function submitStoryComment(e){
   if(e){try{e.preventDefault();e.stopPropagation();}catch(x){}}
-  const status=document.getElementById('storyCommentStatus');
-  const name=document.getElementById('storyCommentName');
-  const text=document.getElementById('storyCommentText');
+  // Reader-এর ভেতরের বর্তমান form-টাই নেব; duplicate ID থাকলেও আর ভুল hidden form ধরা হবে না।
+  const root=document.getElementById('read');
+  const status=root&&root.querySelector('#storyCommentStatus');
+  const name=root&&root.querySelector('#storyCommentName');
+  const text=root&&root.querySelector('#storyCommentText');
   const storyId=String(window.currentStoryId||'');
   if(!status||!name||!text)return false;
   const n=String(name.value||'').trim(), t=String(text.value||'').trim();
   if(!storyId){status.textContent='❌ গল্পের ID পাওয়া যায়নি।';return false;}
   if(!n){status.textContent='❌ আপনার নাম লিখুন।';name.focus();return false;}
   if(!t){status.textContent='❌ আপনার মন্তব্য লিখুন।';text.focus();return false;}
-  const btn=document.getElementById('storyCommentSubmit');
+  const btn=root.querySelector('#storyCommentSubmit');
   if(btn){btn.disabled=true;btn.textContent='⏳ মন্তব্য পাঠানো হচ্ছে...';}
+
+  // আগে LocalStorage-এ সেভ হবে—ইন্টারনেট/Supabase সমস্যা হলেও মন্তব্য হারাবে না।
   const row={id:'comment_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),storyId,name:n,text:t,createdAt:new Date().toISOString(),likes:0};
-  let savedCloud=false;
+  const comments=getStoryComments(storyId); comments.unshift(row); setStoryComments(storyId,comments);
+  name.value=''; text.value='';
+  status.textContent='✅ মন্তব্য পাঠানো হয়েছে।';
+  status.style.color='#16803c';
+  renderStoryComments(storyId);
+  if(btn){btn.disabled=false;btn.textContent='💬 মন্তব্য পাঠান';}
+
+  // Cloud-এ ব্যাকগ্রাউন্ডে সেভ হবে; Cloud ব্যর্থ হলেও LocalStorage মন্তব্য থাকবে।
   try{
     const c=getCloudConfig();
     if(c){
-      const r=await fetch(c.url+'/rest/v1/golpo_ghor_comments',{
+      const controller=new AbortController();
+      const timer=setTimeout(()=>controller.abort(),5000);
+      fetch(c.url+'/rest/v1/golpo_ghor_comments',{
         method:'POST',
         headers:{'apikey':c.key,'Authorization':'Bearer '+c.key,'Content-Type':'application/json','Prefer':'return=minimal'},
-        body:JSON.stringify({id:row.id,story_id:storyId,name:n,comment:t,created_at:row.createdAt,likes:0})
-      });
-      if(r.ok)savedCloud=true;
+        body:JSON.stringify({id:row.id,story_id:storyId,name:n,comment:t,created_at:row.createdAt,likes:0}),
+        signal:controller.signal
+      }).then(r=>{
+        clearTimeout(timer);
+        if(r.ok && document.getElementById('read')===root){status.textContent='✅ মন্তব্য পাঠানো হয়েছে এবং Cloud-এ সেভ হয়েছে।';}
+      }).catch(()=>clearTimeout(timer));
     }
   }catch(x){}
-  const comments=getStoryComments(storyId); comments.unshift(row); setStoryComments(storyId,comments);
-  name.value=''; text.value='';
-  status.textContent=savedCloud?'✅ মন্তব্য পাঠানো হয়েছে এবং Cloud-এ সেভ হয়েছে।':'✅ মন্তব্য পাঠানো হয়েছে।';
-  status.style.color='#16803c'; renderStoryComments(storyId);
-  if(btn){btn.disabled=false;btn.textContent='💬 মন্তব্য পাঠান';}
-  setTimeout(function(){try{showHome();}catch(x){}},1000);
+
+  setTimeout(function(){try{showHome();}catch(x){}},1500);
   return false;
 }
 window.submitStoryComment=submitStoryComment;
