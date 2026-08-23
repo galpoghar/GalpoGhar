@@ -450,7 +450,7 @@ async function saveCloudConfig(){
 }
 function loadCloudConfig(){const c=getCloudConfig();if(c){const u=document.getElementById('sbUrl'),k=document.getElementById('sbKey');if(u)u.value=c.url||'';if(k)k.value=c.key||'';}}
 function setCloudStatus(t,err=false){const e=document.getElementById('cloudStatus');if(e){e.textContent=t;e.style.color=err?'#b42318':'#20824a'}}
-async function sbFetch(path,opts={}){const c=getCloudConfig();if(!c)throw new Error('Supabase config নেই');const h=Object.assign({'apikey':c.key,'Authorization':'Bearer '+c.key,'Content-Type':'application/json','Prefer':'return=representation'},opts.headers||{});const r=await fetch(c.url+'/rest/v1/'+path,Object.assign({},opts,{headers:h}));if(!r.ok)throw new Error(await r.text());return r.status===204?[]:await r.json()}
+async function sbFetch(path,opts={}){const c=getCloudConfig();if(!c)throw new Error('Supabase config নেই');const h=Object.assign({'apikey':c.key,'Authorization':'Bearer '+c.key,'Content-Type':'application/json','Prefer':'return=representation'},opts.headers||{});const r=await fetch(c.url+'/rest/v1/'+path,Object.assign({},opts,{headers:h}));const text=await r.text();if(!r.ok)throw new Error(text||('HTTP '+r.status));if(!text.trim())return[];try{return JSON.parse(text)}catch(e){throw new Error('Supabase response JSON পড়া যায়নি: '+e.message)}}
 async function cloudSync(){
   try{
     setCloudStatus('🔄 Cloud থেকে গল্প আনা হচ্ছে...');
