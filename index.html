@@ -386,6 +386,7 @@ window.ggCommentLoad = function(key){
     <div id="adminStoryList"></div>
   </div>
 </section>
+<div id="storyCloudSetup" style="max-width:900px;margin:20px auto;padding:18px;display:none" class="card"><h3>📚 গল্প Cloud Database Setup</h3><p style="font-size:13px;color:#666">Supabase SQL Editor-এ একবার এই SQL চালালে গল্পের লেখা স্থায়ীভাবে Cloud-এ সেভ হবে।</p><textarea readonly style="width:100%;min-height:170px;font-family:monospace">create table if not exists public.golpo_ghor_stories (id text primary key, title text not null, episode text not null, access text default 'free', price text, audio_url text, image_url text, content text not null, updated_at timestamptz default now()); alter table public.golpo_ghor_stories enable row level security; create policy "public read stories" on public.golpo_ghor_stories for select using (true); create policy "public insert stories" on public.golpo_ghor_stories for insert with check (true); create policy "public update stories" on public.golpo_ghor_stories for update using (true) with check (true); create policy "public delete stories" on public.golpo_ghor_stories for delete using (true);</textarea></div>
 <div id="commentCloudSetup" style="max-width:900px;margin:20px auto;padding:18px;display:none" class="card"><h3>💬 মন্তব্য Cloud Setup</h3><p style="font-size:13px;color:#666">Supabase-এ <b>golpo_ghor_comments</b> table তৈরি না থাকলে মন্তব্য Cloud-এ যাবে না।</p><textarea readonly style="width:100%;min-height:150px;font-family:monospace">create table public.golpo_ghor_comments (id text primary key, story_id text not null, name text not null, comment text not null, created_at timestamptz default now(), likes integer default 0); alter table public.golpo_ghor_comments enable row level security; create policy "public read comments" on public.golpo_ghor_comments for select using (true); create policy "public insert comments" on public.golpo_ghor_comments for insert with check (true); create policy "public delete comments" on public.golpo_ghor_comments for delete using (true);</textarea></div>
 <div id="ggEpisodePicker" onclick="if(event.target===this)closeEpisodePicker()">
   <div class="gg-episode-modal">
@@ -854,7 +855,7 @@ function adminLogin(){
     const home=document.getElementById('home'), read=document.getElementById('read'), panel=document.getElementById('adminPanel');
     if(home)home.style.display='none'; if(read){read.classList.remove('active');read.style.display='none';}
     if(panel)panel.style.display='block';
-    try{newStory();renderAdminStories();loadCloudConfig();}catch(e){console.error(e)}
+    try{newStory();renderAdminStories();loadCloudConfig();const sc=document.getElementById('storyCloudSetup');if(sc)sc.style.display='block';}catch(e){console.error(e)}
     window.scrollTo(0,0);
   }else{if(status)status.textContent='❌ ভুল Password';if(el)el.focus();}
 }
@@ -910,20 +911,60 @@ function syncPremiumPriceField(){
     price.placeholder='Free গল্প';
   }
 }
-function saveStory(){
+async function saveStory(){
   const title=document.getElementById('adminTitle').value.trim(),ep=document.getElementById('adminEpisode').value.trim();
   const access=document.getElementById('adminAccess').value,price=document.getElementById('adminPrice').value,audio=document.getElementById('adminAudio').value.trim(),content=document.getElementById('adminContent').value.trim();
   if(!title||!ep||!content){alert('গল্পের নাম, পর্বের নাম ও গল্পের লেখা অবশ্যই দিতে হবে।');return}
   const stories=getStories(), id=document.getElementById('adminEditId').value;
-  const old=stories.find(x=>x.id===id); const storyPrice=access==='premium'?'20':''; const item={id:id||('gg_'+Date.now()),title,episode:ep,access,price:storyPrice,audio,content,image:pendingImage||((old&&old.image)||''),updatedAt:new Date().toISOString()};
+  const old=stories.find(x=>x.id===id);
+  const storyPrice=access==='premium'?'20':'';
+  const item={id:id||('gg_'+Date.now()),title,episode:ep,access,price:storyPrice,audio,content,image:pendingImage||((old&&old.image)||''),updatedAt:new Date().toISOString()};
   const i=stories.findIndex(x=>x.id===id); if(i>=0) stories[i]=item; else stories.unshift(item);
   setStories(stories); renderAdminStories(); renderPublicEpisodes();
   document.getElementById('adminEditId').value=item.id;
-  document.getElementById('adminStatus').textContent=i>=0?'✅ পর্বটি Update হয়েছে।':'✅ পর্বটি সংরক্ষিত হয়েছে।';
-  document.getElementById('adminStatus').style.color='#20824a';
+  const status=document.getElementById('adminStatus');
+  status.textContent='⏳ গল্পটি Supabase-এ সেভ হচ্ছে...'; status.style.color='#8a5a00';
+
+  try{
+    const c=getCloudConfig();
+    if(!c) throw new Error('Supabase configuration নেই');
+    await sbFetch('golpo_ghor_stories?on_conflict=id',{
+      method:'POST',
+      headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify({
+        id:item.id,title:item.title,episode:item.episode,access:item.access||'free',
+        price:item.price||null,audio_url:item.audio||null,content:item.content||'',
+        image_url:item.image||null,updated_at:item.updatedAt
+      })
+    });
+    status.textContent=i>=0?'✅ পর্বটি Update হয়েছে এবং Supabase-এ সেভ হয়েছে।':'✅ পর্বটি Supabase-এ সেভ হয়েছে।';
+    status.style.color='#20824a';
+  }catch(e){
+    status.textContent=(i>=0?'⚠️ Local-এ Update হয়েছে, কিন্তু Supabase-এ সেভ হয়নি: ':'⚠️ Local-এ সেভ হয়েছে, কিন্তু Supabase-এ সেভ হয়নি: ')+e.message;
+    status.style.color='#b42318';
+  }
 }
 function editStory(id){id=decodeURIComponent(id);const x=getStories().find(s=>s.id===id);if(!x)return;['adminEditId','adminTitle','adminEpisode','adminPrice','adminAudio','adminContent'].forEach((id,i)=>document.getElementById(id).value=[x.id,x.title,x.episode,x.price,x.audio,x.content][i]);pendingImage=x.image||''; document.getElementById('imageStatus').textContent=x.image?'✅ পুরনো ছবি রাখা হয়েছে।':'ছবি দিলে স্বয়ংক্রিয়ভাবে 100 KB-এর নিচে কমপ্রেস হবে।'; document.getElementById('adminAccess').value=x.access;document.getElementById('adminStatus').textContent='✏️ Edit mode — পরিবর্তন করে Save / Update চাপুন।';document.getElementById('adminStatus').style.color='#8a5a00';window.scrollTo(0,0)}
-function deleteStory(id){const x=getStories().find(s=>s.id===id);if(!x)return;if(!confirm('এই পর্বটি মুছে ফেলবেন?'))return;setStories(getStories().filter(s=>s.id!==id));renderAdminStories();renderPublicEpisodes();newStory();document.getElementById('adminStatus').textContent='🗑️ পর্বটি মুছে ফেলা হয়েছে।';document.getElementById('adminStatus').style.color='#b42318'}
+async function deleteStory(id){
+  const x=getStories().find(s=>s.id===id);if(!x)return;
+  if(!confirm('এই পর্বটি মুছে ফেলবেন?'))return;
+  setStories(getStories().filter(s=>s.id!==id));renderAdminStories();renderPublicEpisodes();newStory();
+  const st=document.getElementById('adminStatus');st.textContent='⏳ Local থেকে মুছে দেওয়া হয়েছে, Cloud-এও মুছছি...';st.style.color='#8a5a00';
+  try{
+    const c=getCloudConfig();
+    if(c){
+      await sbFetch('golpo_ghor_stories?id=eq.'+encodeURIComponent(id),{
+        method:'DELETE',
+        headers:{'Prefer':'return=minimal'}
+      });
+      st.textContent='✅ পর্বটি Local ও Supabase—দুই জায়গা থেকেই মুছে গেছে।';st.style.color='#20824a';
+    }else{
+      st.textContent='🗑️ পর্বটি মুছে ফেলা হয়েছে।';
+    }
+  }catch(e){
+    st.textContent='⚠️ Local থেকে মুছে গেছে, কিন্তু Supabase থেকে মুছতে পারেনি: '+e.message;st.style.color='#b42318';
+  }
+}
 function getEpisodeNumber(ep){
   const m=String(ep||'').match(/[0-9০-৯]+/);
   if(!m)return Number.MAX_SAFE_INTEGER;
