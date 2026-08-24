@@ -317,6 +317,7 @@ window.ggCommentLoad = function(key){
     <button type="button" class="btn ghost" onclick="openDraftEditor()">＋ নতুন ড্রাফট</button>
   </div>
   <p style="margin:8px 0 14px;color:#6b625b">গল্প লিখে এখানে সেভ করে রাখুন। পরে তারিখ বসিয়ে Publish করতে পারবেন।</p>
+  <div id="draftCount" style="font-size:13px;color:#8a5a00;margin:0 0 10px;font-weight:700"></div>
   <div id="draftList"></div>
 </div>
 <div id="draftEditor" class="card" style="display:none;margin:14px 0;padding:18px">
@@ -1143,6 +1144,8 @@ window.addEventListener('load',()=>{
     const box=document.getElementById('draftList');
     if(!box)return;
     const a=getDrafts().sort((x,y)=>String(y.updatedAt||'').localeCompare(String(x.updatedAt||'')));
+    const count=document.getElementById('draftCount');
+    if(count) count.textContent=a.length ? ('📚 মোট '+a.length+'টি ড্রাফট সেভ আছে') : '';
     if(!a.length){
       box.innerHTML='<div style="padding:14px;border:1px dashed #d8c8b8;border-radius:10px;color:#777">কোনো ড্রাফট নেই।</div>';
       return;
@@ -1191,11 +1194,14 @@ window.addEventListener('load',()=>{
     const title=document.getElementById('draftTitle').value.trim();
     const content=document.getElementById('draftContent').value.trim();
     if(!title||!content){document.getElementById('draftStatus').textContent='❌ গল্পের নাম ও লেখা দিন।';return;}
-    const a=getDrafts(), id=document.getElementById('draftId').value||('draft_'+Date.now());
-    const old=a.find(x=>x.id===id);
+    const a=getDrafts();
+    // নতুন ড্রাফটের জন্য আলাদা ID; Edit করলে শুধু সেই ড্রাফটটাই Update হবে।
+    const id=document.getElementById('draftId').value || ('draft_'+Date.now()+'_'+Math.random().toString(36).slice(2,8));
+    const old=a.find(x=>String(x.id)===String(id));
     const d={id,title,episode:document.getElementById('draftEpisode').value.trim(),content,
       publishAt:old?old.publishAt:'',updatedAt:new Date().toISOString()};
-    const i=a.findIndex(x=>x.id===id); if(i>=0)a[i]=d; else a.unshift(d);
+    const i=a.findIndex(x=>String(x.id)===String(id));
+    if(i>=0) a[i]=d; else a.unshift(d);
     setDrafts(a); renderDrafts();
     document.getElementById('draftId').value=id;
     document.getElementById('draftStatus').textContent='✅ Draft সেভ হয়েছে।';
