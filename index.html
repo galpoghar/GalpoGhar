@@ -197,10 +197,10 @@ window.ggCommentLoad = function(key){
 
 <main id="home">
 <div class="hero"><div class="hero-card">
-<div class="hero-copy"><div class="eyebrow">📖 আজকের নির্বাচিত গল্প</div>
-<h1>সোনালী বিকেলের চিঠি</h1>
-<p>কিছু চিঠি কখনও পৌঁছায় না ঠিকানায়, তবুও তারা ছুঁয়ে যায় হৃদয়ের গভীরে...</p>
-<a class="btn primary" href="#read" onclick="showReader('gg_original_ep1');return false;">গল্পটি পড়ুন</a><a class="btn ghost" href="#episodes" onclick="openEpisodePicker();return false;">পর্বগুলো দেখুন</a>
+<div class="hero-copy"><div class="eyebrow">✍️ লেখকের পরিচিতি</div>
+<h1 id="authorProfileName">গল্প ঘর</h1>
+<p id="authorProfileBio">এখানে লেখকের পরিচিতি লেখা থাকবে। Admin Panel থেকে এই লেখা যেকোনো সময় Edit / Update করা যাবে।</p>
+<a class="btn primary" href="#episodes" onclick="document.getElementById('episodes')?.scrollIntoView({behavior:'smooth'});return false;">📚 গল্পগুলো দেখুন</a>
 </div></div></div>
 
 <section id="stories"><div class="section-title"><h2>⭐ জনপ্রিয় গল্পসমূহ</h2></div>
@@ -311,6 +311,7 @@ window.ggCommentLoad = function(key){
 </div>
 
 <section id="adminPanel" style="display:none;max-width:1100px;margin:35px auto;padding:0 18px">
+<div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button type="button" class="btn" style="background:#b42318;color:#fff;border:0" onclick="closeAdmin()">🚪 Logout</button></div>
 <div id="draftFolder" class="card" style="margin:18px 0;padding:18px;border:1px solid #e4d6c7;background:#fffaf5">
   <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
     <h3 style="margin:0">📝 ড্রাফট ফোল্ডার</h3>
@@ -360,6 +361,17 @@ window.ggCommentLoad = function(key){
   </div>
 
   <div class="card" style="padding:28px;margin-top:18px">
+    <h3>✍️ লেখকের পরিচিতি</h3>
+    <p style="color:#6b5b50">হোম পেজের “লেখকের পরিচিতি” অংশটি এখান থেকে Edit / Update করতে পারবেন।</p>
+    <input id="authorProfileName" style="width:100%;box-sizing:border-box;padding:12px;margin:6px 0" placeholder="লেখকের নাম / পরিচিতির শিরোনাম">
+    <textarea id="authorProfileBio" rows="6" style="width:100%;box-sizing:border-box;padding:12px;margin:6px 0;font-family:inherit" placeholder="লেখকের পরিচিতি লিখুন..."></textarea>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+      <button type="button" class="btn primary" onclick="saveAuthorProfile()">💾 পরিচিতি Save / Update</button>
+    </div>
+    <div id="authorProfileStatus" style="margin-top:10px;font-weight:700"></div>
+  </div>
+
+  <div class="card" style="padding:28px;margin-top:18px">
     <h3>☁️ অনলাইন ডেটাবেস কানেকশন</h3>
     <p style="color:#6b5b50">Supabase কানেকশন আগে থেকেই সেট করা আছে। প্রয়োজনে Admin এখান থেকে পরিবর্তন করতে পারবেন।</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -387,8 +399,6 @@ window.ggCommentLoad = function(key){
     <div id="adminStoryList"></div>
   </div>
 </section>
-<div id="storyCloudSetup" style="max-width:900px;margin:20px auto;padding:18px;display:none" class="card"><h3>📚 গল্প Cloud Database Setup</h3><p style="font-size:13px;color:#666">Supabase SQL Editor-এ একবার এই SQL চালালে গল্পের লেখা স্থায়ীভাবে Cloud-এ সেভ হবে।</p><textarea readonly style="width:100%;min-height:170px;font-family:monospace">create table if not exists public.golpo_ghor_stories (id text primary key, title text not null, episode text not null, access text default 'free', price text, audio_url text, image_url text, content text not null, updated_at timestamptz default now()); alter table public.golpo_ghor_stories enable row level security; create policy "public read stories" on public.golpo_ghor_stories for select using (true); create policy "public insert stories" on public.golpo_ghor_stories for insert with check (true); create policy "public update stories" on public.golpo_ghor_stories for update using (true) with check (true); create policy "public delete stories" on public.golpo_ghor_stories for delete using (true);</textarea></div>
-<div id="commentCloudSetup" style="max-width:900px;margin:20px auto;padding:18px;display:none" class="card"><h3>💬 মন্তব্য Cloud Setup</h3><p style="font-size:13px;color:#666">Supabase-এ <b>golpo_ghor_comments</b> table তৈরি না থাকলে মন্তব্য Cloud-এ যাবে না।</p><textarea readonly style="width:100%;min-height:150px;font-family:monospace">create table public.golpo_ghor_comments (id text primary key, story_id text not null, name text not null, comment text not null, created_at timestamptz default now(), likes integer default 0); alter table public.golpo_ghor_comments enable row level security; create policy "public read comments" on public.golpo_ghor_comments for select using (true); create policy "public insert comments" on public.golpo_ghor_comments for insert with check (true); create policy "public delete comments" on public.golpo_ghor_comments for delete using (true);</textarea></div>
 <div id="ggEpisodePicker" onclick="if(event.target===this)closeEpisodePicker()">
   <div class="gg-episode-modal">
     <div class="gg-episode-head">
@@ -410,8 +420,36 @@ const DEFAULT_SB_CONFIG={
   url:'https://impshqtwzgczhddgykkn.supabase.co',
   key:'sb_publishable_F0fpkmAX1wAm3a_AcqQChQ_UQYbNMWr'
 };
-function getStories(){try{return JSON.parse(localStorage.getItem(GG_KEY)||'[]')}catch(e){return[]}}
-function setStories(a){localStorage.setItem(GG_KEY,JSON.stringify(a))}
+let GG_MEMORY_STORIES=null;
+function getStories(){
+  if(Array.isArray(GG_MEMORY_STORIES)) return GG_MEMORY_STORIES;
+  try{
+    const a=JSON.parse(localStorage.getItem(GG_KEY)||'[]');
+    GG_MEMORY_STORIES=Array.isArray(a)?a:[];
+    return GG_MEMORY_STORIES;
+  }catch(e){return GG_MEMORY_STORIES=[];}
+}
+function setStories(a){
+  GG_MEMORY_STORIES=Array.isArray(a)?a:[];
+  const full=JSON.stringify(GG_MEMORY_STORIES);
+  try{
+    localStorage.setItem(GG_KEY,full);
+    return true;
+  }catch(e){
+    // Browser localStorage quota exceeded: keep the full stories in memory and
+    // store only a small index. The actual story text/images are kept in Supabase.
+    try{
+      const slim=GG_MEMORY_STORIES.map(x=>({
+        id:x.id,title:x.title||'',episode:x.episode||'',access:x.access||'free',
+        price:x.price||'',updatedAt:x.updatedAt||'',original:!!x.original
+      }));
+      localStorage.setItem(GG_KEY,JSON.stringify(slim));
+      const st=document.getElementById('cloudStatus');
+      if(st){st.textContent='☁️ Local storage পূর্ণ—গল্পগুলো Cloud-এ রাখা হচ্ছে।';st.style.color='#8a5a00';}
+    }catch(e2){}
+    return false;
+  }
+}
 function seedOriginalStory(){
   let stories=getStories();
   const oldId='gg_original_ep1';
@@ -452,22 +490,270 @@ async function saveCloudConfig(){
 function loadCloudConfig(){const c=getCloudConfig();if(c){const u=document.getElementById('sbUrl'),k=document.getElementById('sbKey');if(u)u.value=c.url||'';if(k)k.value=c.key||'';}}
 function setCloudStatus(t,err=false){const e=document.getElementById('cloudStatus');if(e){e.textContent=t;e.style.color=err?'#b42318':'#20824a'}}
 async function sbFetch(path,opts={}){const c=getCloudConfig();if(!c)throw new Error('Supabase config নেই');const h=Object.assign({'apikey':c.key,'Authorization':'Bearer '+c.key,'Content-Type':'application/json','Prefer':'return=representation'},opts.headers||{});const r=await fetch(c.url+'/rest/v1/'+path,Object.assign({},opts,{headers:h}));const text=await r.text();if(!r.ok)throw new Error(text||('HTTP '+r.status));if(!text.trim())return[];try{return JSON.parse(text)}catch(e){throw new Error('Supabase response JSON পড়া যায়নি: '+e.message)}}
+
+/* ===== AUTO CLOUD SAVE: all phones ===== */
+let GG_AUTO_STORY_TIMER=null, GG_AUTO_AUTHOR_TIMER=null, GG_AUTO_DRAFT_TIMER=null;
+let GG_AUTO_LOADING=false;
+
+function autoCloudMessage(msg, ok=true){
+  const s=document.getElementById('cloudStatus');
+  if(s){s.textContent=msg;s.style.color=ok?'#20824a':'#b42318';}
+}
+
+async function autoSaveCurrentStoryToCloud(){
+  if(GG_AUTO_LOADING)return;
+  const title=(document.getElementById('adminTitle')?.value||'').trim();
+  const ep=(document.getElementById('adminEpisode')?.value||'').trim();
+  const content=(document.getElementById('adminContent')?.value||'').trim();
+  if(!title && !ep && !content)return;
+  // Local draft is always kept immediately.
+  const idEl=document.getElementById('adminEditId');
+  let id=(idEl?.value||'').trim();
+  if(!id){
+    id='gg_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
+    if(idEl)idEl.value=id;
+  }
+  const access=document.getElementById('adminAccess')?.value||'free';
+  const price=access==='premium'?'20':'';
+  const audio=(document.getElementById('adminAudio')?.value||'').trim();
+  const stories=getStories();
+  const old=stories.find(x=>String(x.id)===String(id));
+  const item={id,title,episode:ep,access,price,audio,
+    content,image:(old&&old.image)||'',updatedAt:new Date().toISOString()};
+  const i=stories.findIndex(x=>String(x.id)===String(id));
+  if(i>=0)stories[i]=Object.assign({},stories[i],item);else stories.unshift(item);
+  setStories(stories);
+  try{renderAdminStories();renderPublicEpisodes();}catch(e){}
+  if(!title||!ep||!content){
+    autoCloudMessage('💾 অসম্পূর্ণ লেখা Local-এ অটো সেভ হয়েছে — নাম/পর্ব/লেখা পূর্ণ হলে Cloud-এ যাবে।');
+    return;
+  }
+  try{
+    await sbFetch('golpo_ghor_stories?on_conflict=id',{
+      method:'POST',
+      headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify({id,title,episode:ep,access,price:price||null,audio_url:audio||null,
+        image_url:item.image||null,content,updated_at:item.updatedAt})
+    });
+    autoCloudMessage('☁️ Auto Save ✓ গল্প Cloud-এ সেভ হয়েছে।');
+  }catch(e){
+    autoCloudMessage('⚠️ Auto Save: Local-এ আছে, Cloud-এ এখনো সেভ হয়নি।',false);
+  }
+}
+
+function scheduleAutoStorySave(){
+  clearTimeout(GG_AUTO_STORY_TIMER);
+  GG_AUTO_STORY_TIMER=setTimeout(autoSaveCurrentStoryToCloud,1400);
+}
+
+async function autoSaveAuthorToCloud(){
+  if(GG_AUTO_LOADING)return;
+  const name=(document.getElementById('authorProfileName')?.value||'').trim();
+  const bio=(document.getElementById('authorProfileBio')?.value||'').trim();
+  if(!name && !bio)return;
+  const x={name:name||DEFAULT_AUTHOR_PROFILE.name,bio:bio||DEFAULT_AUTHOR_PROFILE.bio};
+  setAuthorProfile(x);
+  try{
+    await sbFetch('golpo_ghor_author?on_conflict=id',{
+      method:'POST',
+      headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify({id:'main',name:x.name,bio:x.bio,updated_at:new Date().toISOString()})
+    });
+    const st=document.getElementById('authorProfileStatus');
+    if(st){st.textContent='☁️ Auto Save ✓ লেখকের পরিচিতি Cloud-এ সেভ হয়েছে।';st.style.color='#20824a';}
+  }catch(e){}
+}
+function scheduleAutoAuthorSave(){
+  clearTimeout(GG_AUTO_AUTHOR_TIMER);
+  GG_AUTO_AUTHOR_TIMER=setTimeout(autoSaveAuthorToCloud,1000);
+}
+
+async function autoSaveDraftToCloud(){
+  if(GG_AUTO_LOADING)return;
+  const title=(document.getElementById('draftTitle')?.value||'').trim();
+  const episode=(document.getElementById('draftEpisode')?.value||'').trim();
+  const content=(document.getElementById('draftContent')?.value||'').trim();
+  if(!title && !content && !episode)return;
+  const idEl=document.getElementById('draftId');
+  let id=(idEl?.value||'').trim();
+  if(!id){
+    id='draft_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
+    if(idEl)idEl.value=id;
+  }
+  const publishDate=document.getElementById('draftPublishDate')?.value||'';
+  const publishTime=document.getElementById('draftPublishTime')?.value||'00:00';
+  let publishAt=null;
+  if(publishDate){
+    const d=new Date(publishDate+'T'+publishTime);
+    if(!isNaN(d.getTime()))publishAt=d.toISOString();
+  }
+  const d={id,title,episode,content,publishAt:publishAt||'',updatedAt:new Date().toISOString()};
+  const a=getDrafts(),i=a.findIndex(x=>String(x.id)===String(id));
+  if(i>=0)a[i]=Object.assign({},a[i],d);else a.unshift(d);
+  setDrafts(a); try{renderDrafts()}catch(e){}
+  if(!title||!content)return;
+  try{
+    await sbFetch('golpo_ghor_drafts?on_conflict=id',{
+      method:'POST',
+      headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify({id,title,episode,content,publish_at:publishAt,updated_at:d.updatedAt})
+    });
+    const st=document.getElementById('draftStatus');
+    if(st){st.textContent='☁️ Auto Save ✓ Draft Cloud-এ সেভ হয়েছে।';st.style.color='#20824a';}
+  }catch(e){}
+}
+function scheduleAutoDraftSave(){
+  clearTimeout(GG_AUTO_DRAFT_TIMER);
+  GG_AUTO_DRAFT_TIMER=setTimeout(autoSaveDraftToCloud,1200);
+}
+
+async function syncDraftsFromCloud(){
+  try{
+    const rows=await sbFetch('golpo_ghor_drafts?select=*&order=updated_at.desc');
+    if(!rows||!rows.length)return;
+    const local=getDrafts(), map={};
+    local.forEach(x=>map[String(x.id)]=x);
+    rows.forEach(r=>{
+      const cloud={id:r.id,title:r.title||'',episode:r.episode||'',content:r.content||'',
+        publishAt:r.publish_at||'',updatedAt:r.updated_at||new Date().toISOString()};
+      const old=map[String(cloud.id)];
+      if(!old || new Date(cloud.updatedAt).getTime()>=new Date(old.updatedAt||0).getTime())map[String(cloud.id)]=cloud;
+    });
+    const merged=Object.values(map).sort((a,b)=>new Date(b.updatedAt||0)-new Date(a.updatedAt||0));
+    setDrafts(merged); try{renderDrafts()}catch(e){}
+  }catch(e){}
+}
+
+async function autoCloudInitialSync(){
+  GG_AUTO_LOADING=true;
+  try{
+    await cloudSync();
+    await loadAuthorProfileFromCloud();
+    await syncDraftsFromCloud();
+  }catch(e){}
+  GG_AUTO_LOADING=false;
+}
+
+/* Automatically watch Admin story, Author profile and Draft fields. */
+window.addEventListener('load',function(){
+  const storyIds=['adminTitle','adminEpisode','adminAccess','adminPrice','adminAudio','adminContent'];
+  storyIds.forEach(id=>document.getElementById(id)?.addEventListener('input',scheduleAutoStorySave));
+  ['adminAccess'].forEach(id=>document.getElementById(id)?.addEventListener('change',scheduleAutoStorySave));
+  ['authorProfileName','authorProfileBio'].forEach(id=>document.getElementById(id)?.addEventListener('input',scheduleAutoAuthorSave));
+  ['draftTitle','draftEpisode','draftContent','draftPublishDate','draftPublishTime'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.addEventListener('input',scheduleAutoDraftSave);el.addEventListener('change',scheduleAutoDraftSave);}
+  });
+  setTimeout(autoCloudInitialSync,800);
+});
+
+const GG_AUTHOR_KEY='golpoGhorAuthorProfileV1';
+const DEFAULT_AUTHOR_PROFILE={name:'গল্প ঘর',bio:'এখানে লেখকের পরিচিতি লেখা থাকবে। Admin Panel থেকে এই লেখা যেকোনো সময় Edit / Update করা যাবে।'};
+function getAuthorProfile(){
+  try{
+    const x=JSON.parse(localStorage.getItem(GG_AUTHOR_KEY)||'null');
+    return Object.assign({},DEFAULT_AUTHOR_PROFILE,x||{});
+  }catch(e){return Object.assign({},DEFAULT_AUTHOR_PROFILE)}
+}
+function setAuthorProfile(x){
+  localStorage.setItem(GG_AUTHOR_KEY,JSON.stringify(x));
+  renderAuthorProfile();
+}
+function renderAuthorProfile(){
+  const x=getAuthorProfile();
+  const n=document.getElementById('authorProfileName'),b=document.getElementById('authorProfileBio');
+  const hn=document.getElementById('authorProfileName'),hb=document.getElementById('authorProfileBio');
+  if(n)n.textContent=x.name||DEFAULT_AUTHOR_PROFILE.name;
+  if(b)b.textContent=x.bio||DEFAULT_AUTHOR_PROFILE.bio;
+  if(hn && document.activeElement!==hn)hn.value=x.name||'';
+  if(hb && document.activeElement!==hb)hb.value=x.bio||'';
+}
+async function loadAuthorProfileFromCloud(){
+  try{
+    const rows=await sbFetch('golpo_ghor_author?select=*&id=eq.main&limit=1');
+    if(rows && rows.length){
+      const x={name:rows[0].name||DEFAULT_AUTHOR_PROFILE.name,bio:rows[0].bio||DEFAULT_AUTHOR_PROFILE.bio};
+      setAuthorProfile(x);
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+async function saveAuthorProfile(){
+  const name=(document.getElementById('authorProfileName')?.value||'').trim();
+  const bio=(document.getElementById('authorProfileBio')?.value||'').trim();
+  const st=document.getElementById('authorProfileStatus');
+  if(!name||!bio){if(st)st.textContent='❌ লেখকের নাম ও পরিচিতি লিখুন।';return;}
+  const x={name,bio};
+  setAuthorProfile(x);
+  if(st){st.textContent='⏳ পরিচিতি Cloud-এ সেভ হচ্ছে...';st.style.color='#8a5a00';}
+  try{
+    await sbFetch('golpo_ghor_author?on_conflict=id',{
+      method:'POST',
+      headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify({id:'main',name,bio,updated_at:new Date().toISOString()})
+    });
+    if(st){st.textContent='✅ লেখকের পরিচিতি Local ও Supabase-এ Save হয়েছে।';st.style.color='#20824a';}
+  }catch(e){
+    if(st){st.textContent='⚠️ Local-এ Save হয়েছে, কিন্তু Cloud-এ সেভ হয়নি: '+e.message;st.style.color='#b42318';}
+  }
+}
 async function cloudSync(){
   try{
     setCloudStatus('🔄 Cloud থেকে গল্প আনা হচ্ছে...');
     const rows=await sbFetch('golpo_ghor_stories?select=*&order=updated_at.desc');
-    const mapped=rows.map(r=>({
-      id:r.id,title:r.title,episode:r.episode,access:r.access||'free',
-      price:r.price||'',audio:r.audio_url||'',content:r.content||'',
+    const cloudRows=rows.map(r=>({
+      id:r.id,title:r.title||'',episode:r.episode||'',access:r.access||'free',
+      price:r.price||'',audio:r.audio_url||'',content:r.content||'',image:r.image_url||'',
       updatedAt:r.updated_at||new Date().toISOString()
     }));
-    if(mapped.length){
-      setStories(mapped);
+
+    // IMPORTANT: Never replace Local stories with Cloud stories.
+    // Merge both stores so stories written on another phone are not lost.
+    const local=getStories();
+    const byId={};
+    local.forEach(x=>{ if(x && x.id) byId[String(x.id)]=x; });
+    cloudRows.forEach(c=>{
+      const l=byId[String(c.id)];
+      if(!l){ byId[String(c.id)]=c; return; }
+      const lt=new Date(l.updatedAt||0).getTime();
+      const ct=new Date(c.updatedAt||0).getTime();
+      // Prefer the newer record, but never throw away non-empty local content/image.
+      if(ct>=lt){
+        byId[String(c.id)]=Object.assign({},l,c,{
+          content:c.content||l.content||'', image:c.image||l.image||''
+        });
+      }else{
+        byId[String(c.id)]=Object.assign({},c,l,{
+          content:l.content||c.content||'', image:l.image||c.image||''
+        });
+      }
+    });
+    const merged=Object.values(byId).sort((a,b)=>new Date(b.updatedAt||0)-new Date(a.updatedAt||0));
+    if(merged.length){
+      setStories(merged);
       renderAdminStories();
       renderPublicEpisodes();
-      setCloudStatus('✅ Cloud থেকে '+mapped.length+'টি গল্প Sync হয়েছে।');
+      setCloudStatus('✅ Cloud + Local মিলিয়ে '+merged.length+'টি গল্প রাখা হয়েছে।');
+
+      // Upload Local-only / locally newer records so another phone can receive them.
+      const cloudIds=new Set(cloudRows.map(x=>String(x.id)));
+      const toUpload=merged.filter(x=>x && x.id && !cloudIds.has(String(x.id)));
+      if(toUpload.length && !GG_AUTO_LOADING){
+        try{
+          await sbFetch('golpo_ghor_stories?on_conflict=id',{
+            method:'POST',
+            headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},
+            body:JSON.stringify(toUpload.map(x=>({
+              id:x.id,title:x.title,episode:x.episode,access:x.access||'free',
+              price:x.price||null,audio_url:x.audio||null,image_url:x.image||null,
+              content:x.content||'',updated_at:x.updatedAt||new Date().toISOString()
+            })))
+          });
+        }catch(e){}
+      }
     }else{
-      setCloudStatus('ℹ️ Cloud database-এ এখন কোনো গল্প নেই। Local গল্প রাখা হয়েছে।');
+      setCloudStatus('ℹ️ Cloud ও Local—দুই জায়গাতেই কোনো গল্প পাওয়া যায়নি।');
     }
   }catch(e){
     setCloudStatus('❌ Cloud Sync ব্যর্থ: '+e.message,true);
@@ -841,6 +1127,7 @@ function showHome(fromBack){
 function openAdmin(){
   renderPendingPayments();
   try{renderAdminComments();}catch(e){}
+  if(localStorage.getItem('ggAdminLoggedIn')==='1'){ showAdminPanel(); return; }
   const m=document.getElementById('adminLoginModal');
   const p=document.getElementById('adminLoginPassword');
   const st=document.getElementById('adminLoginStatus');
@@ -849,22 +1136,33 @@ function openAdmin(){
   if(m)m.style.display='flex';
   setTimeout(()=>p&&p.focus(),80);
 }
+function showAdminPanel(){
+  const home=document.getElementById('home'), read=document.getElementById('read'), panel=document.getElementById('adminPanel');
+  if(home)home.style.display='none';
+  if(read){read.classList.remove('active');read.style.display='none';}
+  if(panel)panel.style.display='block';
+  const qb=document.getElementById('adminQuickBtn');
+  if(qb){qb.textContent='🚪 Admin Logout';qb.onclick=closeAdmin;}
+  try{newStory();renderAdminStories();loadCloudConfig();renderAuthorProfile();loadAuthorProfileFromCloud();}catch(e){console.error(e)}
+  window.scrollTo(0,0);
+}
+function restoreAdminSession(){
+  if(localStorage.getItem('ggAdminLoggedIn')==='1') showAdminPanel();
+}
 function adminLogin(){
   const el=document.getElementById('adminLoginPassword'), status=document.getElementById('adminLoginStatus');
   if(el&&el.value==='admin123'){
-    sessionStorage.setItem('ggAdminLoggedIn','1'); closeAdminLogin();
-    const home=document.getElementById('home'), read=document.getElementById('read'), panel=document.getElementById('adminPanel');
-    if(home)home.style.display='none'; if(read){read.classList.remove('active');read.style.display='none';}
-    if(panel)panel.style.display='block';
-    try{newStory();renderAdminStories();loadCloudConfig();const sc=document.getElementById('storyCloudSetup');if(sc)sc.style.display='block';}catch(e){console.error(e)}
-    window.scrollTo(0,0);
+    localStorage.setItem('ggAdminLoggedIn','1'); closeAdminLogin();
+    showAdminPanel();
   }else{if(status)status.textContent='❌ ভুল Password';if(el)el.focus();}
 }
 function closeAdminLogin(){document.getElementById('adminLoginModal').style.display='none'}
 
 function closeAdmin(){
-  sessionStorage.removeItem('ggAdminLoggedIn');
+  localStorage.removeItem('ggAdminLoggedIn');
   closeAdminLogin();
+  const qb=document.getElementById('adminQuickBtn');
+  if(qb){qb.textContent='🔐 Admin Login';qb.onclick=openAdmin;}
   const home=document.getElementById('home');
   const panel=document.getElementById('adminPanel');
   const read=document.getElementById('read');
@@ -1102,14 +1400,17 @@ function renderPublicEpisodes(){
   setTimeout(initStoryCarousel,30);
 }
 seedOriginalStory();
+renderAuthorProfile();
 renderAdminStories();
 renderPublicEpisodes();
 loadCloudConfig();
 function escapeHtml(v){return String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
 window.addEventListener('load',()=>{
+  try{restoreAdminSession()}catch(e){}
   try{initStoryComments()}catch(e){}
   try{initReaderComments()}catch(e){}
   try{loadCloudConfig()}catch(e){}
+  try{renderAuthorProfile();loadAuthorProfileFromCloud()}catch(e){}
   try{renderAdminStories()}catch(e){}
   try{renderPendingPayments()}catch(e){}
   try{renderPublicEpisodes()}catch(e){}
@@ -1226,6 +1527,9 @@ window.addEventListener('load',()=>{
       audio:'',content:d.content,updatedAt:publishAt,publishAt,original:false
     };
     stories.unshift(story); setStories(stories);
+    try{ await sbFetch('golpo_ghor_stories?on_conflict=id',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({
+      id:story.id,title:story.title,episode:story.episode,access:'free',price:null,audio_url:null,content:story.content,updated_at:story.updatedAt
+    })}); }catch(e){}
 
     setDrafts(a.filter(x=>x.id!==id));
     renderDrafts();
