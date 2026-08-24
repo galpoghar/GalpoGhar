@@ -324,8 +324,8 @@ button.btn.new-episode-btn:hover{filter:brightness(.94) !important;}
 <main id="home">
 <div class="hero"><div class="hero-card">
 <div class="hero-copy"><div class="eyebrow">✍️ লেখকের পরিচিতি</div>
-<h1 id="authorProfileName">গল্প ঘর</h1>
-<p id="authorProfileBio">এখানে লেখকের পরিচিতি লেখা থাকবে। Admin Panel থেকে এই লেখা যেকোনো সময় Edit / Update করা যাবে।</p>
+<h1 id="homeAuthorProfileName">গল্প ঘর</h1>
+<p id="homeAuthorProfileBio">এখানে লেখকের পরিচিতি লেখা থাকবে। Admin Panel থেকে এই লেখা যেকোনো সময় Edit / Update করা যাবে।</p>
 <a class="btn primary" href="#episodes" onclick="document.getElementById('episodes')?.scrollIntoView({behavior:'smooth'});return false;">📚 গল্পগুলো দেখুন</a>
 </div></div></div>
 
@@ -487,8 +487,8 @@ button.btn.new-episode-btn:hover{filter:brightness(.94) !important;}
   <div class="card" style="padding:28px;margin-top:18px">
     <h3>✍️ লেখকের পরিচিতি</h3>
     <p style="color:#6b5b50">হোম পেজের “লেখকের পরিচিতি” অংশটি এখান থেকে Edit / Update করতে পারবেন।</p>
-    <input id="authorProfileName" style="width:100%;box-sizing:border-box;padding:12px;margin:6px 0" placeholder="লেখকের নাম / পরিচিতির শিরোনাম">
-    <textarea id="authorProfileBio" rows="6" style="width:100%;box-sizing:border-box;padding:12px;margin:6px 0;font-family:inherit" placeholder="লেখকের পরিচিতি লিখুন..."></textarea>
+    <input id="adminAuthorProfileName" style="width:100%;box-sizing:border-box;padding:12px;margin:6px 0" placeholder="লেখকের নাম / পরিচিতির শিরোনাম">
+    <textarea id="adminAuthorProfileBio" rows="6" style="width:100%;box-sizing:border-box;padding:12px;margin:6px 0;font-family:inherit" placeholder="লেখকের পরিচিতি লিখুন..."></textarea>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
       <button type="button" class="btn primary" onclick="saveAuthorProfile()">💾 পরিচিতি Save / Update</button>
     </div>
@@ -677,8 +677,8 @@ function scheduleAutoStorySave(){
 
 async function autoSaveAuthorToCloud(){
   if(GG_AUTO_LOADING)return;
-  const name=(document.getElementById('authorProfileName')?.value||'').trim();
-  const bio=(document.getElementById('authorProfileBio')?.value||'').trim();
+  const name=(document.getElementById('adminAuthorProfileName')?.value||'').trim();
+  const bio=(document.getElementById('adminAuthorProfileBio')?.value||'').trim();
   if(!name && !bio)return;
   const x={name:name||DEFAULT_AUTHOR_PROFILE.name,bio:bio||DEFAULT_AUTHOR_PROFILE.bio};
   setAuthorProfile(x);
@@ -768,7 +768,7 @@ window.addEventListener('load',function(){
   const storyIds=['adminTitle','adminEpisode','adminAccess','adminPrice','adminAudio','adminContent'];
   storyIds.forEach(id=>document.getElementById(id)?.addEventListener('input',scheduleAutoStorySave));
   ['adminAccess'].forEach(id=>document.getElementById(id)?.addEventListener('change',scheduleAutoStorySave));
-  ['authorProfileName','authorProfileBio'].forEach(id=>document.getElementById(id)?.addEventListener('input',scheduleAutoAuthorSave));
+  ['adminAuthorProfileName','adminAuthorProfileBio'].forEach(id=>document.getElementById(id)?.addEventListener('input',scheduleAutoAuthorSave));
   ['draftTitle','draftEpisode','draftContent','draftPublishDate','draftPublishTime'].forEach(id=>{
     const el=document.getElementById(id);
     if(el){el.addEventListener('input',scheduleAutoDraftSave);el.addEventListener('change',scheduleAutoDraftSave);}
@@ -790,12 +790,14 @@ function setAuthorProfile(x){
 }
 function renderAuthorProfile(){
   const x=getAuthorProfile();
-  const n=document.getElementById('authorProfileName'),b=document.getElementById('authorProfileBio');
-  const hn=document.getElementById('authorProfileName'),hb=document.getElementById('authorProfileBio');
-  if(n)n.textContent=x.name||DEFAULT_AUTHOR_PROFILE.name;
-  if(b)b.textContent=x.bio||DEFAULT_AUTHOR_PROFILE.bio;
-  if(hn && document.activeElement!==hn)hn.value=x.name||'';
-  if(hb && document.activeElement!==hb)hb.value=x.bio||'';
+  const hn=document.getElementById('homeAuthorProfileName');
+  const hb=document.getElementById('homeAuthorProfileBio');
+  const an=document.getElementById('adminAuthorProfileName');
+  const ab=document.getElementById('adminAuthorProfileBio');
+  if(hn)hn.textContent=x.name||DEFAULT_AUTHOR_PROFILE.name;
+  if(hb)hb.textContent=x.bio||DEFAULT_AUTHOR_PROFILE.bio;
+  if(an && document.activeElement!==an)an.value=x.name||'';
+  if(ab && document.activeElement!==ab)ab.value=x.bio||'';
 }
 async function loadAuthorProfileFromCloud(){
   try{
@@ -809,8 +811,8 @@ async function loadAuthorProfileFromCloud(){
   return false;
 }
 async function saveAuthorProfile(){
-  const name=(document.getElementById('authorProfileName')?.value||'').trim();
-  const bio=(document.getElementById('authorProfileBio')?.value||'').trim();
+  const name=(document.getElementById('adminAuthorProfileName')?.value||'').trim();
+  const bio=(document.getElementById('adminAuthorProfileBio')?.value||'').trim();
   const st=document.getElementById('authorProfileStatus');
   if(!name||!bio){if(st)st.textContent='❌ লেখকের নাম ও পরিচিতি লিখুন।';return;}
   const x={name,bio};
