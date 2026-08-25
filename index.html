@@ -1263,11 +1263,55 @@ function submitPhonePePayment(){
   if(typeof renderPendingPayments==='function') renderPendingPayments();
 }
 
+function getStoredPremiumMember(){
+  try{return JSON.parse(localStorage.getItem('ggPremiumMember')||'null');}
+  catch(e){return null;}
+}
+
 function premiumIsActive(){
+  const x=getStoredPremiumMember();
+  return !!(x && x.validUntil && new Date(x.validUntil)>new Date() &&
+    (x.status==='approved' || x.status==='active'));
+}
+
+// Downloaded HTML (content://downloads/...) has a different localStorage from
+// the live GitHub site. So a paid reader can restore Premium by verifying the
+// same phone/email against the Subscriber Database.
+async function restorePremiumAccess(){
+  if(premiumIsActive()) return true;
+  let identity='';
+  try{identity=(prompt('🔐 Premium গল্প খুলতে আপনার পেমেন্টের মোবাইল নম্বর দিন:')||'').trim();}catch(e){}
+  if(!identity) return false;
+
+  const cleanPhone=identity.replace(/\D/g,'');
+  const isEmail=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identity);
+  if(cleanPhone.length<10 && !isEmail){
+    alert('❌ সঠিক মোবাইল নম্বর বা Email দিন।');
+    return false;
+  }
   try{
-    const x=JSON.parse(localStorage.getItem('ggPremiumMember')||'null');
-    return !!(x&&x.status==='approved'&&x.validUntil&&new Date(x.validUntil)>new Date());
-  }catch(e){return false}
+    const field=isEmail?'email':'phone';
+    const value=encodeURIComponent(isEmail?identity:cleanPhone);
+    const now=new Date().toISOString();
+    const rows=await sbFetch('golpo_ghor_subscribers?select=payment_id,name,phone,email,plan,plan_label,amount,paid_at,valid_from,valid_until,status,method&'+field+'=eq.'+value+'&status=eq.active&valid_until=gt.'+encodeURIComponent(now)+'&order=paid_at.desc&limit=1');
+    if(!Array.isArray(rows)||!rows.length){
+      return false;
+    }
+    const x=rows[0];
+    localStorage.setItem('ggPremiumMember',JSON.stringify({
+      memberKey:x.phone||x.email||identity,
+      name:x.name||'',phone:x.phone||'',email:x.email||'',
+      validUntil:x.valid_until,validFrom:x.valid_from||x.paid_at||null,
+      plan:x.plan||'',planLabel:x.plan_label||'',amount:x.amount||0,
+      status:'approved',method:x.method||'Razorpay',paymentId:x.payment_id||null,
+      restoredAt:new Date().toISOString()
+    }));
+    if(typeof renderPublicEpisodes==='function') renderPublicEpisodes();
+    return true;
+  }catch(e){
+    console.error('Premium restore failed:',e);
+    return false;
+  }
 }
 
 function approvePhonePePayment(id){
@@ -1332,10 +1376,11 @@ function renderPendingPayments(){
   }).join('');
 }
 
-function premiumIsActive(){try{const x=JSON.parse(localStorage.getItem('ggPremiumMember')||'null');return !!(x&&x.validUntil&&new Date(x.validUntil)>new Date())}catch(e){return false}}
-function showPremiumLock(id){
+async function showPremiumLock(id){
   if(premiumIsActive()){showReader(id);return;}
-  alert('🔒 এই Premium গল্পটি লক করা আছে। Premium Subscription নিয়ে গল্পটি পড়ুন।');
+  const restored=await restorePremiumAccess();
+  if(restored){showReader(id);return;}
+  alert('🔒 এই Premium গল্পটি লক করা আছে। Active Premium Subscription প্রয়োজন।');
 }
 
 function getStoryViews(){
