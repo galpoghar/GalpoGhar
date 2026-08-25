@@ -353,6 +353,14 @@ button.btn.new-episode-btn:hover{filter:brightness(.94) !important;}
 </style>
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<style>
+.author-bio-wrap{position:relative}
+.author-bio{line-height:1.75;max-height:125px;overflow:hidden;margin-bottom:8px;transition:max-height .3s ease}
+.author-bio.expanded{max-height:2000px}
+.author-read-more{border:0;background:none;color:#f4b52d;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;padding:4px 0;text-decoration:underline}
+.author-read-more:hover{opacity:.85}
+</style>
 </head>
 <body>
 <header><div class="nav">
@@ -366,21 +374,20 @@ button.btn.new-episode-btn:hover{filter:brightness(.94) !important;}
 <div class="hero"><div class="hero-card">
 <div class="hero-copy"><div class="eyebrow">✍️ লেখকের পরিচিতি</div>
 <h1 id="homeAuthorProfileName">গল্প ঘর</h1>
-<p id="homeAuthorProfileBio">এখানে লেখকের পরিচিতি লেখা থাকবে। Admin Panel থেকে এই লেখা যেকোনো সময় Edit / Update করা যাবে।</p>
+<div class="author-bio-wrap">
+<p id="homeAuthorProfileBio" class="author-bio">এখানে লেখকের পরিচিতি লেখা থাকবে। Admin Panel থেকে এই লেখা যেকোনো সময় Edit / Update করা যাবে।</p>
+<button id="authorReadMoreBtn" type="button" class="author-read-more" onclick="toggleAuthorBio()">Read More</button>
+</div>
 <a class="btn primary" href="#episodes" onclick="document.getElementById('episodes')?.scrollIntoView({behavior:'smooth'});return false;">📚 গল্পগুলো দেখুন</a>
 </div></div></div>
 
 <section id="stories">
 <div class="section-title"><h2>⭐ জনপ্রিয় গল্পসমূহ</h2></div>
-<div id="publicEpisodes"></div>
-</section>
-<section id="episodes"><h2>📚 জনপ্রিয় গল্পসমূহ</h2>
+<span id="episodes"></span>
 <div class="gg-carousel-wrap">
-<div class="episodes" id="publicEpisodes">
-<div class="episode"><div><b>পর্ব ১: অচেনা খাম ও পুরোনো সুবাস</b><br><span class="free">● ফ্রি পড়ুন</span></div><a href="#read" onclick="showReader('gg_original_ep1');return false;">পড়ুন →</a></div>
-<div class="episode"><div><b>পর্ব ২: আগামী পর্ব</b><br><span class="lock">🔒 শীঘ্রই আসছে</span></div><span>—</span></div>
-<div class="episode"><div><b>পর্ব ৩: আগামী পর্ব</b><br><span class="lock">🔒 শীঘ্রই আসছে</span></div><span>—</span></div>
-</div></section>
+<div class="episodes" id="publicEpisodes"></div>
+</div>
+</section>
 
 
 
@@ -877,6 +884,7 @@ async function autoCloudInitialSync(){
 
 /* Automatically watch Admin story, Author profile and Draft fields. */
 window.addEventListener('load',function(){
+  setTimeout(updateAuthorReadMore,300);
   const storyIds=['adminTitle','adminEpisode','adminAccess','adminPrice','adminAudio','adminContent'];
   storyIds.forEach(id=>document.getElementById(id)?.addEventListener('input',scheduleAutoStorySave));
   ['adminAccess'].forEach(id=>document.getElementById(id)?.addEventListener('change',scheduleAutoStorySave));
@@ -900,6 +908,21 @@ function setAuthorProfile(x){
   localStorage.setItem(GG_AUTHOR_KEY,JSON.stringify(x));
   renderAuthorProfile();
 }
+function updateAuthorReadMore(){
+  const bio=document.getElementById('homeAuthorProfileBio');
+  const btn=document.getElementById('authorReadMoreBtn');
+  if(!bio||!btn)return;
+  bio.classList.remove('expanded');
+  btn.textContent='Read More';
+  btn.style.display=(bio.scrollHeight>bio.clientHeight+8)?'inline-block':'none';
+}
+function toggleAuthorBio(){
+  const bio=document.getElementById('homeAuthorProfileBio');
+  const btn=document.getElementById('authorReadMoreBtn');
+  if(!bio||!btn)return;
+  const expanded=bio.classList.toggle('expanded');
+  btn.textContent=expanded?'Read Less':'Read More';
+}
 function renderAuthorProfile(){
   const x=getAuthorProfile();
   const hn=document.getElementById('homeAuthorProfileName');
@@ -908,6 +931,7 @@ function renderAuthorProfile(){
   const ab=document.getElementById('adminAuthorProfileBio');
   if(hn)hn.textContent=x.name||DEFAULT_AUTHOR_PROFILE.name;
   if(hb)hb.textContent=x.bio||DEFAULT_AUTHOR_PROFILE.bio;
+  updateAuthorReadMore();
   if(an && document.activeElement!==an)an.value=x.name||'';
   if(ab && document.activeElement!==ab)ab.value=x.bio||'';
 }
@@ -1811,7 +1835,8 @@ function renderPublicEpisodes(){
   });
   setTimeout(initStoryCarousel,30);
 }
-// Deleted built-in story is no longer auto-created.
+// Keep the original free story in the Admin Panel as an editable story.
+seedOriginalStory();
 renderAuthorProfile();
 renderAdminStories();
 renderPublicEpisodes();
@@ -1823,7 +1848,7 @@ window.addEventListener('load',()=>{
   try{initReaderComments()}catch(e){}
   try{loadCloudConfig()}catch(e){}
   try{renderAuthorProfile();loadAuthorProfileFromCloud()}catch(e){}
-  try{renderAdminStories()}catch(e){}
+  try{seedOriginalStory();renderAdminStories()}catch(e){}
   try{renderPendingPayments()}catch(e){}
   try{renderPublicEpisodes()}catch(e){}
 });
