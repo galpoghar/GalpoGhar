@@ -1148,6 +1148,25 @@ async function startRazorpayPayment(){
           }));
         }catch(e){}
 
+        // Payment সফল হলেই এই ডিভাইসে Premium সঙ্গে সঙ্গে চালু হবে।
+        // আগে শুধু Database-এ save হচ্ছিল, কিন্তু ggPremiumMember সেট না হওয়ায়
+        // গল্পগুলো এখনও Locked দেখাতে পারত।
+        try{
+          localStorage.setItem('ggPremiumMember',JSON.stringify({
+            memberKey:phone || email,
+            name, phone, email,
+            validUntil:validUntil.toISOString(),
+            validFrom:paidAt.toISOString(),
+            plan, planLabel:planInfo.label, amount:planInfo.amount,
+            status:'approved',
+            method:'Razorpay',
+            paymentId:response.razorpay_payment_id,
+            orderId:response.razorpay_order_id || null,
+            signature:response.razorpay_signature || null
+          }));
+          if(typeof renderPublicEpisodes==='function') renderPublicEpisodes();
+        }catch(e){ console.error('Premium activation failed:',e); }
+
         try{
           const saved=await sbFetch('golpo_ghor_subscribers?on_conflict=payment_id',{
             method:'POST',
@@ -1169,9 +1188,23 @@ async function startRazorpayPayment(){
             })
           });
           if(!Array.isArray(saved) || !saved.length) throw new Error('Database row ফেরত আসেনি');
-          if(status) status.textContent='✅ পেমেন্ট সফল এবং Subscriber Database-এ Save হয়েছে। '+planInfo.label+' Premium চালু হয়েছে।';
+          // DB save সফল হলে pending queue পরিষ্কার করি।
+          try{ localStorage.removeItem('ggPendingRazorpaySubscriber'); }catch(e){}
+          if(status) status.textContent='✅ পেমেন্ট সফল। '+planInfo.label+' Premium এখনই চালু হয়েছে এবং Subscriber Database-এ Save হয়েছে।';
         }catch(dbErr){
-          if(status) status.textContent='⚠️ পেমেন্ট সফল হয়েছে, কিন্তু Subscriber Database-এ Save হয়নি। আবার চেষ্টা করুন।';
+          // Payment সফল—তাই Premium বন্ধ হবে না। Database সাময়িকভাবে ব্যর্থ হলে
+          // তথ্য local queue-তে রেখে পরের Admin refresh-এ আবার save করার চেষ্টা হবে।
+          try{
+            localStorage.setItem('ggPendingRazorpaySubscriber',JSON.stringify({
+              payment_id:response.razorpay_payment_id,
+              order_id:response.razorpay_order_id||null,
+              name,phone,email:email||null,plan,plan_label:planInfo.label,
+              amount:planInfo.amount,paid_at:paidAt.toISOString(),
+              valid_from:paidAt.toISOString(),valid_until:validUntil.toISOString(),
+              status:'active',method:'Razorpay'
+            }));
+          }catch(e){}
+          if(status) status.textContent='⚠️ পেমেন্ট সফল এবং Premium চালু হয়েছে। Database save সাময়িকভাবে ব্যর্থ—Admin Refresh করলে আবার চেষ্টা হবে।';
           console.error('Subscriber save failed:',dbErr);
         }
       },
@@ -1572,6 +1605,24 @@ async function loadPremiumSubscribers(){
     console.error('Premium subscriber load failed:',e);
   }
 }
+async function retryPendingRazorpaySubscriber(){
+  try{
+    const raw=localStorage.getItem('ggPendingRazorpaySubscriber');
+    if(!raw)return;
+    const item=JSON.parse(raw);
+    if(!item || !item.payment_id)return;
+    const saved=await sbFetch('golpo_ghor_subscribers?on_conflict=payment_id',{
+      method:'POST',
+      headers:{'Prefer':'resolution=merge-duplicates,return=representation','Accept':'application/json'},
+      body:JSON.stringify(item)
+    });
+    if(Array.isArray(saved)&&saved.length){
+      localStorage.removeItem('ggPendingRazorpaySubscriber');
+      console.log('Pending Razorpay subscriber synced successfully.');
+    }
+  }catch(e){ console.warn('Pending Razorpay subscriber sync failed:',e); }
+}
+
 function showAdminPanel(){
   const home=document.getElementById('home'), read=document.getElementById('read'), panel=document.getElementById('adminPanel');
   if(home)home.style.display='none';
@@ -1579,7 +1630,7 @@ function showAdminPanel(){
   if(panel)panel.style.display='block';
   const qb=document.getElementById('adminQuickBtn');
   if(qb){qb.textContent='🚪 Admin Logout';qb.onclick=closeAdmin;}
-  try{newStory();renderAdminStories();loadCloudConfig();renderAuthorProfile();loadAuthorProfileFromCloud();loadPremiumSubscribers();}catch(e){console.error(e)}
+  try{newStory();renderAdminStories();loadCloudConfig();renderAuthorProfile();loadAuthorProfileFromCloud();retryPendingRazorpaySubscriber().finally(()=>loadPremiumSubscribers());}catch(e){console.error(e)}
   window.scrollTo(0,0);
 }
 function restoreAdminSession(){
