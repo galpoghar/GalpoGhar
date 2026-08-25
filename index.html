@@ -280,6 +280,9 @@ button.btn.new-episode-btn:hover{filter:brightness(.94) !important;}
 #draftFolder .draft-action-edit{background:#1565c0!important;color:#fff!important;border:2px solid #0d47a1!important;opacity:1!important;font-weight:800!important}
 #draftFolder .draft-action-delete{background:#c62828!important;color:#fff!important;border:2px solid #8e0000!important;opacity:1!important;font-weight:800!important}
 #draftFolder .draft-action-publish{background:#2e7d32!important;color:#fff!important;border:2px solid #1b5e20!important;opacity:1!important;font-weight:800!important}
+.gg-publish-btn{background:#2e7d32!important;color:#fff!important;border:0!important;font-size:17px!important;font-weight:800!important;padding:12px 20px!important;min-width:125px!important;border-radius:12px!important;box-shadow:0 3px 8px rgba(0,0,0,.18)!important}
+.gg-publish-btn:hover{filter:brightness(.94)!important}
+.gg-publish-btn.gg-published{background:#6d4c41!important}
 </style>
 
 <style id="draft-editor-hidden">
@@ -293,6 +296,7 @@ button.btn.new-episode-btn:hover{filter:brightness(.94) !important;}
 .author-bio-wrap{position:relative}
 .author-bio{line-height:1.75;max-height:125px;overflow:hidden;margin-bottom:8px;transition:max-height .3s ease}
 .author-bio.expanded{max-height:2000px}
+.author-profile-photo{width:120px;height:120px;border-radius:50%;object-fit:cover;border:4px solid rgba(255,255,255,.9);box-shadow:0 8px 25px rgba(0,0,0,.28);margin:0 0 18px;display:none;background:#fff}.author-profile-photo.show{display:block}
 .author-read-more{border:0;background:none;color:#f4b52d;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;padding:4px 0;text-decoration:underline}
 .author-read-more:hover{opacity:.85}
 </style>
@@ -454,6 +458,7 @@ button.btn.new-episode-btn:hover{filter:brightness(.94) !important;}
 <main id="home">
 <div class="hero"><div class="hero-card">
 <div class="hero-copy"><div class="eyebrow">✍️ লেখকের পরিচিতি</div>
+<img id="homeAuthorProfilePhoto" class="author-profile-photo" alt="লেখকের ছবি">
 <h1 id="homeAuthorProfileName">গল্প ঘর</h1>
 <div class="author-bio-wrap">
 <p id="homeAuthorProfileBio" class="author-bio">এখানে লেখকের পরিচিতি লেখা থাকবে। Admin Panel থেকে এই লেখা যেকোনো সময় Edit / Update করা যাবে।</p>
@@ -623,7 +628,7 @@ button.btn.new-episode-btn:hover{filter:brightness(.94) !important;}
       <input id="adminEpisode" placeholder="পর্ব নম্বর ও নাম">
       <select id="adminAccess" onchange="syncPremiumPriceField()"><option value="free">🆓 Free</option><option value="premium">🔒 Premium</option></select>
       <input id="adminAudio" type="url" placeholder="Audio URL (ঐচ্ছিক)">
-      <div><label style="display:block;font-size:13px;margin-bottom:5px">🖼️ Cover Photo (সর্বোচ্চ 100 KB)</label><input id="adminImage" type="file" accept="image/*" onchange="prepareImage(this)" style="width:100%"><small id="imageStatus" style="color:#777">ছবি দিলে স্বয়ংক্রিয়ভাবে 100 KB-এর নিচে কমপ্রেস হবে।</small></div>
+      <div><label style="display:block;font-size:13px;margin-bottom:5px">🖼️ Cover Photo (সর্বোচ্চ 50 KB)</label><input id="adminImage" type="file" accept="image/*" onchange="prepareImage(this)" style="width:100%"><small id="imageStatus" style="color:#777">ছবি দিলে স্বয়ংক্রিয়ভাবে 50 KB-এর নিচে কমপ্রেস হবে।</small></div>
     </div>
     <textarea id="adminContent" rows="10" placeholder="পর্বের লেখা এখানে লিখুন..." style="width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;font-family:inherit;box-sizing:border-box"></textarea>
     <div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap">
@@ -639,6 +644,14 @@ button.btn.new-episode-btn:hover{filter:brightness(.94) !important;}
     <p style="color:#6b5b50">হোম পেজের “লেখকের পরিচিতি” অংশটি এখান থেকে Edit / Update করতে পারবেন।</p>
     <input id="adminAuthorProfileName" style="width:100%;box-sizing:border-box;padding:12px;margin:6px 0" placeholder="লেখকের নাম / পরিচিতির শিরোনাম">
     <textarea id="adminAuthorProfileBio" rows="6" style="width:100%;box-sizing:border-box;padding:12px;margin:6px 0;font-family:inherit" placeholder="লেখকের পরিচিতি লিখুন..."></textarea>
+    <div style="margin-top:10px">
+      <label style="display:block;font-size:13px;margin-bottom:5px">🖼️ লেখকের ছবি (সর্বোচ্চ 50 KB)</label>
+      <input id="adminAuthorProfileImage" type="file" accept="image/*" onchange="prepareAuthorImage(this)" style="width:100%;box-sizing:border-box">
+      <div id="authorImagePreviewWrap" style="display:none;margin-top:10px">
+        <img id="authorImagePreview" alt="লেখকের ছবির Preview" style="width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid #eadfce">
+      </div>
+      <small id="authorImageStatus" style="color:#777">ছবি দিলে স্বয়ংক্রিয়ভাবে 50 KB-এর নিচে কমপ্রেস হবে।</small>
+    </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
       <button type="button" class="btn primary" onclick="saveAuthorProfile()">💾 পরিচিতি Save / Update</button>
     </div>
@@ -747,6 +760,7 @@ button.btn.new-episode-btn:hover{filter:brightness(.94) !important;}
 
 
 const GG_KEY='golpoGhorStoriesV4';
+const GG_AUTHOR_STORY_ID='gg_author_profile';
 const SB_CFG_KEY='golpoGhorSupabaseConfigV1';
 // গল্প ঘর — public Supabase configuration (safe for browser use)
 const DEFAULT_SB_CONFIG={
@@ -763,16 +777,35 @@ function isDeletedStory(x){
          GG_DELETED_STORY_TITLES.has(String(x.title||'').trim());
 }
 
+const GG_UNPUBLISHED_MARKER='<!--GG_UNPUBLISHED_V1-->';
+function ggIsPublished(story){
+  return !story || story.published !== false;
+}
+function ggCloudContent(content,published){
+  const c=String(content||'');
+  return published===false ? GG_UNPUBLISHED_MARKER+'\n'+c : c;
+}
+function ggLocalContent(content){
+  const c=String(content||'');
+  return c.indexOf(GG_UNPUBLISHED_MARKER)===0 ? c.slice(GG_UNPUBLISHED_MARKER.length).replace(/^\s*\n?/,'') : c;
+}
+function ggPublishButton(x){
+  const id=encodeURIComponent(String(x.id||''));
+  if(x.published===false){
+    return '<button type="button" class="gg-publish-btn" onclick="publishStory(\''+id+'\')">📢 Publish</button>';
+  }
+  return '<button type="button" class="gg-publish-btn gg-published" onclick="unpublishStory(\''+id+'\')">↩️ Unpublish</button>';
+}
 let GG_MEMORY_STORIES=null;
 function getStories(){
   if(Array.isArray(GG_MEMORY_STORIES)) {
-    GG_MEMORY_STORIES=GG_MEMORY_STORIES.filter(x=>!isDeletedStory(x));
+    GG_MEMORY_STORIES=GG_MEMORY_STORIES.filter(x=>!isDeletedStory(x) && String(x.id)!==GG_AUTHOR_STORY_ID);
     return GG_MEMORY_STORIES;
   }
   try{
     const a=JSON.parse(localStorage.getItem(GG_KEY)||'[]');
     GG_MEMORY_STORIES=Array.isArray(a)?a:[];
-    GG_MEMORY_STORIES=GG_MEMORY_STORIES.filter(x=>!isDeletedStory(x));
+    GG_MEMORY_STORIES=GG_MEMORY_STORIES.filter(x=>!isDeletedStory(x) && String(x.id)!==GG_AUTHOR_STORY_ID);
     return GG_MEMORY_STORIES;
   }catch(e){return GG_MEMORY_STORIES=[];}
 }
@@ -807,7 +840,7 @@ function seedOriginalStory(){
   const ep=(read.querySelector('.lead')||{}).textContent?.trim()||'পর্ব ১: অচেনা খাম ও পুরোনো সুবাস';
   const ps=[...read.querySelectorAll('p')].filter(p=>!p.querySelector('audio')).map(p=>p.innerText.trim()).filter(Boolean);
   if(!ps.length) return;
-  stories.unshift({id:oldId,title,episode:ep,access:'free',price:'',audio:'',content:ps.join('\n\n'),updatedAt:new Date().toISOString(),original:true});
+  stories.unshift({id:oldId,title,episode:ep,access:'free',price:'',audio:'',content:ps.join('\n\n'),updatedAt:new Date().toISOString(),original:true,published:true});
   setStories(stories);
 }
 function getCloudConfig(){try{return JSON.parse(localStorage.getItem(SB_CFG_KEY)||'null')||DEFAULT_SB_CONFIG}catch(e){return DEFAULT_SB_CONFIG}}
@@ -866,7 +899,9 @@ async function autoSaveCurrentStoryToCloud(){
   const stories=getStories();
   const old=stories.find(x=>String(x.id)===String(id));
   const item={id,title,episode:ep,access,price,audio,
-    content,image:(old&&old.image)||'',updatedAt:new Date().toISOString()};
+    content:ggLocalContent(content),image:(old&&old.image)||'',
+    published:old ? old.published!==false : false,
+    updatedAt:new Date().toISOString()};
   const i=stories.findIndex(x=>String(x.id)===String(id));
   if(i>=0)stories[i]=Object.assign({},stories[i],item);else stories.unshift(item);
   setStories(stories);
@@ -880,7 +915,7 @@ async function autoSaveCurrentStoryToCloud(){
       method:'POST',
       headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},
       body:JSON.stringify({id,title,episode:ep,access,price:price||null,audio_url:audio||null,
-        image_url:item.image||null,content,updated_at:item.updatedAt})
+        image_url:item.image||null,content:ggCloudContent(item.content,item.published),updated_at:item.updatedAt})
     });
     autoCloudMessage('☁️ Auto Save ✓ গল্প Cloud-এ সেভ হয়েছে।');
   }catch(e){
@@ -897,19 +932,18 @@ async function autoSaveAuthorToCloud(){
   if(GG_AUTO_LOADING)return;
   const name=(document.getElementById('adminAuthorProfileName')?.value||'').trim();
   const bio=(document.getElementById('adminAuthorProfileBio')?.value||'').trim();
-  if(!name && !bio)return;
-  const x={name:name||DEFAULT_AUTHOR_PROFILE.name,bio:bio||DEFAULT_AUTHOR_PROFILE.bio};
+  if(!name&&!bio&&!pendingAuthorImage)return;
+  const old=getAuthorProfile(); const x={name:name||old.name||DEFAULT_AUTHOR_PROFILE.name,bio:bio||old.bio||DEFAULT_AUTHOR_PROFILE.bio,image:pendingAuthorImage||old.image||''};
   setAuthorProfile(x);
   try{
-    await sbFetch('golpo_ghor_author?on_conflict=id',{
-      method:'POST',
-      headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},
-      body:JSON.stringify({id:'main',name:x.name,bio:x.bio,updated_at:new Date().toISOString()})
-    });
-    const st=document.getElementById('authorProfileStatus');
-    if(st){st.textContent='☁️ Auto Save ✓ লেখকের পরিচিতি Cloud-এ সেভ হয়েছে।';st.style.color='#20824a';}
-  }catch(e){}
+    await sbFetch('golpo_ghor_stories?on_conflict=id',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({id:GG_AUTHOR_STORY_ID,title:x.name,episode:'AUTHOR_PROFILE',access:'free',price:null,audio_url:null,image_url:x.image||null,content:x.bio,updated_at:new Date().toISOString()})});
+    try{await sbFetch('golpo_ghor_author?on_conflict=id',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({id:'main',name:x.name,bio:x.bio,updated_at:new Date().toISOString()})});}catch(ignore){}
+    const st=document.getElementById('authorProfileStatus'); if(st){st.textContent='☁️ Auto Save ✓ লেখকের পরিচিতি ও ছবি Cloud-এ সেভ হয়েছে।';st.style.color='#20824a';}
+  }catch(e){
+    const st=document.getElementById('authorProfileStatus'); if(st){st.textContent='⚠️ Auto Save: Local-এ আছে, Cloud-এ এখনো সেভ হয়নি।';st.style.color='#b42318';}
+  }
 }
+
 function scheduleAutoAuthorSave(){
   clearTimeout(GG_AUTO_AUTHOR_TIMER);
   GG_AUTO_AUTHOR_TIMER=setTimeout(autoSaveAuthorToCloud,1000);
@@ -996,7 +1030,28 @@ window.addEventListener('load',function(){
 });
 
 const GG_AUTHOR_KEY='golpoGhorAuthorProfileV1';
-const DEFAULT_AUTHOR_PROFILE={name:'গল্প ঘর',bio:'এখানে লেখকের পরিচিতি লেখা থাকবে। Admin Panel থেকে এই লেখা যেকোনো সময় Edit / Update করা যাবে।'};
+const DEFAULT_AUTHOR_PROFILE={name:'গল্প ঘর',bio:'এখানে লেখকের পরিচিতি লেখা থাকবে। Admin Panel থেকে এই লেখা যেকোনো সময় Edit / Update করা যাবে।',image:''};
+let pendingAuthorImage='';
+function prepareAuthorImage(input){
+  const f=input.files&&input.files[0]; if(!f)return;
+  if(!f.type.startsWith('image/')){alert('শুধু ছবি নির্বাচন করুন।');input.value='';return;}
+  const status=document.getElementById('authorImageStatus'); if(status)status.textContent='⏳ ছবি কমপ্রেস হচ্ছে...';
+  const reader=new FileReader(); reader.onload=e=>{
+    const img=new Image(); img.onload=()=>{
+      const maxSide=700, scale=Math.min(1,maxSide/Math.max(img.width,img.height));
+      const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(img.width*scale)); c.height=Math.max(1,Math.round(img.height*scale));
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      let q=.82,data='';
+      do{data=c.toDataURL('image/jpeg',q);q-=.05;}while(data.length*0.75>48000&&q>.15);
+      const bytes=Math.round(data.length*0.75);
+      if(bytes>50000){if(status)status.textContent='❌ 50 KB-এর নিচে আনা যায়নি। অন্য ছবি দিন।';pendingAuthorImage='';input.value='';return;}
+      pendingAuthorImage=data;
+      const pv=document.getElementById('authorImagePreview'),wrap=document.getElementById('authorImagePreviewWrap');
+      if(pv){pv.src=data;} if(wrap)wrap.style.display='block';
+      if(status)status.textContent='✅ ছবি প্রস্তুত — '+Math.round(bytes/1024)+' KB';
+    }; img.src=e.target.result;
+  }; reader.readAsDataURL(f);
+}
 function getAuthorProfile(){
   try{
     const x=JSON.parse(localStorage.getItem(GG_AUTHOR_KEY)||'null');
@@ -1028,42 +1083,57 @@ function renderAuthorProfile(){
   const hb=document.getElementById('homeAuthorProfileBio');
   const an=document.getElementById('adminAuthorProfileName');
   const ab=document.getElementById('adminAuthorProfileBio');
+  const hp=document.getElementById('homeAuthorProfilePhoto');
+  const ap=document.getElementById('authorImagePreview');
+  const aw=document.getElementById('authorImagePreviewWrap');
   if(hn)hn.textContent=x.name||DEFAULT_AUTHOR_PROFILE.name;
   if(hb)hb.textContent=x.bio||DEFAULT_AUTHOR_PROFILE.bio;
+  if(hp){hp.src=x.image||'';hp.classList.toggle('show',!!x.image);}
+  if(ap&&x.image)ap.src=x.image; if(aw)aw.style.display=x.image?'block':'none';
   updateAuthorReadMore();
   if(an && document.activeElement!==an)an.value=x.name||'';
   if(ab && document.activeElement!==ab)ab.value=x.bio||'';
 }
 async function loadAuthorProfileFromCloud(){
   try{
+    const rows=await sbFetch('golpo_ghor_stories?select=id,title,episode,content,image_url,updated_at&id=eq.'+encodeURIComponent(GG_AUTHOR_STORY_ID)+'&limit=1');
+    if(rows&&rows.length){
+      const r=rows[0]; const x={name:r.title||DEFAULT_AUTHOR_PROFILE.name,bio:r.content||DEFAULT_AUTHOR_PROFILE.bio,image:r.image_url||''};
+      setAuthorProfile(x); pendingAuthorImage=x.image||''; return true;
+    }
+  }catch(e){}
+  try{
     const rows=await sbFetch('golpo_ghor_author?select=*&id=eq.main&limit=1');
-    if(rows && rows.length){
-      const x={name:rows[0].name||DEFAULT_AUTHOR_PROFILE.name,bio:rows[0].bio||DEFAULT_AUTHOR_PROFILE.bio};
-      setAuthorProfile(x);
-      return true;
+    if(rows&&rows.length){
+      const x={name:rows[0].name||DEFAULT_AUTHOR_PROFILE.name,bio:rows[0].bio||DEFAULT_AUTHOR_PROFILE.bio,image:rows[0].image_url||''};
+      setAuthorProfile(x); pendingAuthorImage=x.image||''; return true;
     }
   }catch(e){}
   return false;
 }
+
 async function saveAuthorProfile(){
   const name=(document.getElementById('adminAuthorProfileName')?.value||'').trim();
   const bio=(document.getElementById('adminAuthorProfileBio')?.value||'').trim();
   const st=document.getElementById('authorProfileStatus');
+  const old=getAuthorProfile();
+  const image=pendingAuthorImage||old.image||'';
   if(!name||!bio){if(st)st.textContent='❌ লেখকের নাম ও পরিচিতি লিখুন।';return;}
-  const x={name,bio};
-  setAuthorProfile(x);
-  if(st){st.textContent='⏳ পরিচিতি Cloud-এ সেভ হচ্ছে...';st.style.color='#8a5a00';}
+  const x={name,bio,image}; setAuthorProfile(x);
+  if(st){st.textContent='⏳ লেখকের পরিচিতি Cloud-এ সেভ হচ্ছে...';st.style.color='#8a5a00';}
   try{
-    await sbFetch('golpo_ghor_author?on_conflict=id',{
-      method:'POST',
-      headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},
-      body:JSON.stringify({id:'main',name,bio,updated_at:new Date().toISOString()})
+    await sbFetch('golpo_ghor_stories?on_conflict=id',{
+      method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify({id:GG_AUTHOR_STORY_ID,title:name,episode:'AUTHOR_PROFILE',access:'free',price:null,audio_url:null,image_url:image||null,content:bio,updated_at:new Date().toISOString()})
     });
-    if(st){st.textContent='✅ লেখকের পরিচিতি Local ও Supabase-এ Save হয়েছে।';st.style.color='#20824a';}
+    // Keep the existing author table updated too, for backward compatibility.
+    try{await sbFetch('golpo_ghor_author?on_conflict=id',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({id:'main',name,bio,updated_at:new Date().toISOString()})});}catch(ignore){}
+    if(st){st.textContent='✅ লেখকের পরিচিতি ও ছবি Local ও Supabase-এ Save হয়েছে।';st.style.color='#20824a';}
   }catch(e){
     if(st){st.textContent='⚠️ Local-এ Save হয়েছে, কিন্তু Cloud-এ সেভ হয়নি: '+e.message;st.style.color='#b42318';}
   }
 }
+
 async function cloudSync(){
   try{
     setCloudStatus('🔄 Cloud থেকে গল্প আনা হচ্ছে...');
@@ -1071,11 +1141,16 @@ async function cloudSync(){
       await sbFetch('golpo_ghor_stories?id=eq.gg_original_ep1',{method:'DELETE',headers:{'Prefer':'return=minimal'}});
     }catch(ignoreDeletedStoryError){}
     const rows=await sbFetch('golpo_ghor_stories?select=*&order=updated_at.desc');
-    const cloudRows=rows.map(r=>({
-      id:r.id,title:r.title||'',episode:r.episode||'',access:r.access||'free',
-      price:r.price||'',audio:r.audio_url||'',content:r.content||'',image:r.image_url||'',
-      updatedAt:r.updated_at||new Date().toISOString()
-    })).filter(x=>!isDeletedStory(x));
+    const cloudRows=rows.map(r=>{
+      const rawContent=String(r.content||'');
+      const unpublished=rawContent.indexOf(GG_UNPUBLISHED_MARKER)===0;
+      return {
+        id:r.id,title:r.title||'',episode:r.episode||'',access:r.access||'free',
+        price:r.price||'',audio:r.audio_url||'',content:ggLocalContent(rawContent),image:r.image_url||'',
+        published:!unpublished,
+        updatedAt:r.updated_at||new Date().toISOString()
+      };
+    }).filter(x=>!isDeletedStory(x));
 
     // IMPORTANT: Never replace Local stories with Cloud stories.
     // Merge both stores so stories written on another phone are not lost.
@@ -1116,7 +1191,7 @@ async function cloudSync(){
             body:JSON.stringify(toUpload.map(x=>({
               id:x.id,title:x.title,episode:x.episode,access:x.access||'free',
               price:x.price||null,audio_url:x.audio||null,image_url:x.image||null,
-              content:x.content||'',updated_at:x.updatedAt||new Date().toISOString()
+              content:ggCloudContent(x.content,x.published),updated_at:x.updatedAt||new Date().toISOString()
             })))
           });
         }catch(e){}
@@ -1133,7 +1208,7 @@ async function cloudPushAll(){
     setCloudStatus('⬆️ গল্পগুলো Cloud-এ পাঠানো হচ্ছে...');
     const rows=getStories().map(x=>({
       id:x.id,title:x.title,episode:x.episode,access:x.access||'free',
-      price:x.price||null,audio_url:x.audio||null,content:x.content||'',
+      price:x.price||null,audio_url:x.audio||null,content:ggCloudContent(x.content,x.published),
       updated_at:x.updatedAt||new Date().toISOString()
     }));
     if(!rows.length){setCloudStatus('ℹ️ পাঠানোর মতো কোনো গল্প নেই।');return;}
@@ -1637,6 +1712,10 @@ function showReader(id){
   if(!id)return;
   const x=getStories().find(s=>String(s.id)===String(id));
   if(!x){alert('এই গল্পটি পাওয়া যাচ্ছে না।');return;}
+  if(x.published===false && localStorage.getItem('ggAdminLoggedIn')!=='1'){
+    alert('এই গল্পটি এখনও Publish করা হয়নি।');
+    return;
+  }
   if(x.access==='premium' && !premiumIsActive()){showPremiumLock(id);return;}
   recordStoryView(id); window.currentStoryId=id;
   try{
@@ -1819,13 +1898,13 @@ function prepareImage(input){
   const status=document.getElementById('imageStatus'); status.textContent='⏳ ছবি কমপ্রেস হচ্ছে...';
   const reader=new FileReader(); reader.onload=e=>{
     const img=new Image(); img.onload=()=>{
-      const maxSide=1200, scale=Math.min(1,maxSide/Math.max(img.width,img.height));
+      const maxSide=900, scale=Math.min(1,maxSide/Math.max(img.width,img.height));
       const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(img.width*scale)); c.height=Math.max(1,Math.round(img.height*scale));
       c.getContext('2d').drawImage(img,0,0,c.width,c.height);
       let q=.82, data='';
-      do{data=c.toDataURL('image/jpeg',q);q-=.05;}while(data.length*0.75>98000 && q>.2);
+      do{data=c.toDataURL('image/jpeg',q);q-=.05;}while(data.length*0.75>48000 && q>.15);
       const bytes=Math.round(data.length*0.75);
-      if(bytes>100000){status.textContent='❌ 100 KB-এর নিচে আনা যায়নি। অন্য ছবি দিন।';pendingImage='';input.value='';return;}
+      if(bytes>50000){status.textContent='❌ 50 KB-এর নিচে আনা যায়নি। অন্য ছবি দিন।';pendingImage='';input.value='';return;}
       pendingImage=data; status.textContent='✅ ছবি প্রস্তুত — '+Math.round(bytes/1024)+' KB';
     }; img.src=e.target.result;
   }; reader.readAsDataURL(f);
@@ -1839,7 +1918,10 @@ async function saveStory(){
   const stories=getStories(), id=document.getElementById('adminEditId').value;
   const old=stories.find(x=>x.id===id);
   const storyPrice=categoryStorageValue(category);
-  const item={id:id||('gg_'+Date.now()),title,episode:ep,category,access,price:storyPrice,audio,content,image:pendingImage||((old&&old.image)||''),updatedAt:new Date().toISOString()};
+  const item={id:id||('gg_'+Date.now()),title,episode:ep,category,access,price:storyPrice,audio,
+    content:ggLocalContent(content),image:pendingImage||((old&&old.image)||''),
+    published:old ? old.published!==false : false,
+    updatedAt:new Date().toISOString()};
   const i=stories.findIndex(x=>x.id===id); if(i>=0) stories[i]=item; else stories.unshift(item);
   setStories(stories); renderAdminStories(); renderPublicEpisodes();
   document.getElementById('adminEditId').value=item.id;
@@ -1855,7 +1937,7 @@ async function saveStory(){
       body:JSON.stringify({
         id:item.id,title:item.title,episode:item.episode,access:item.access||'free',
         price:item.price||null,audio_url:item.audio||null,content:item.content||'',
-        image_url:item.image||null,updated_at:item.updatedAt
+        image_url:item.image||null,content:ggCloudContent(item.content,item.published),updated_at:item.updatedAt
       })
     });
     status.textContent=i>=0?'✅ পর্বটি Update হয়েছে এবং Supabase-এ সেভ হয়েছে।':'✅ পর্বটি Supabase-এ সেভ হয়েছে।';
@@ -1873,9 +1955,64 @@ function editStory(id){
   set('adminEditId',x.id);set('adminTitle',x.title);set('adminEpisode',x.episode);set('adminAudio',x.audio);set('adminContent',x.content);set('adminCategory',storyCategory(x));
   const access=document.getElementById('adminAccess');if(access)access.value=x.access||'free';
   pendingImage=x.image||'';
-  const imageStatus=document.getElementById('imageStatus');if(imageStatus)imageStatus.textContent=x.image?'✅ পুরনো ছবি রাখা হয়েছে।':'ছবি দিলে স্বয়ংক্রিয়ভাবে 100 KB-এর নিচে কমপ্রেস হবে।';
+  const imageStatus=document.getElementById('imageStatus');if(imageStatus)imageStatus.textContent=x.image?'✅ পুরনো ছবি রাখা হয়েছে।':'ছবি দিলে স্বয়ংক্রিয়ভাবে 50 KB-এর নিচে কমপ্রেস হবে।';
   const status=document.getElementById('adminStatus');if(status){status.textContent='✏️ Edit mode — পরিবর্তন করে Save / Update চাপুন।';status.style.color='#8a5a00';}
   const panel=document.getElementById('adminPanel');if(panel)panel.scrollIntoView({behavior:'smooth',block:'start'});else window.scrollTo(0,0);
+}
+async function publishStory(encodedId){
+  const id=decodeURIComponent(encodedId||'');
+  const stories=getStories();
+  const i=stories.findIndex(s=>String(s.id)===String(id));
+  if(i<0)return;
+  stories[i]=Object.assign({},stories[i],{published:true,updatedAt:new Date().toISOString()});
+  setStories(stories);
+  renderAdminStories();
+  renderPublicEpisodes(window.ggSelectedLiteratureFolder||'story');
+  const st=document.getElementById('adminStatus');
+  if(st){st.textContent='⏳ গল্পটি পাঠকদের জন্য Publish করা হচ্ছে...';st.style.color='#8a5a00';}
+  try{
+    const c=getCloudConfig();
+    if(!c)throw new Error('Supabase configuration নেই');
+    const x=stories[i];
+    await sbFetch('golpo_ghor_stories?on_conflict=id',{
+      method:'POST',
+      headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify({id:x.id,title:x.title,episode:x.episode,access:x.access||'free',
+        price:x.price||null,audio_url:x.audio||null,image_url:x.image||null,
+        content:ggCloudContent(x.content,true),updated_at:x.updatedAt})
+    });
+    if(st){st.textContent='✅ গল্পটি এখন পাঠকদের জন্য Publish হয়েছে।';st.style.color='#20824a';}
+  }catch(e){
+    if(st){st.textContent='⚠️ Local-এ Publish হয়েছে, কিন্তু Cloud-এ Publish করা যায়নি: '+e.message;st.style.color='#b42318';}
+  }
+}
+async function unpublishStory(encodedId){
+  const id=decodeURIComponent(encodedId||'');
+  const stories=getStories();
+  const i=stories.findIndex(s=>String(s.id)===String(id));
+  if(i<0)return;
+  if(!confirm('এই গল্পটি পাঠকদের কাছ থেকে লুকিয়ে দেবেন?'))return;
+  stories[i]=Object.assign({},stories[i],{published:false,updatedAt:new Date().toISOString()});
+  setStories(stories);
+  renderAdminStories();
+  renderPublicEpisodes(window.ggSelectedLiteratureFolder||'story');
+  const st=document.getElementById('adminStatus');
+  if(st){st.textContent='⏳ গল্পটি পাঠকদের কাছ থেকে লুকানো হচ্ছে...';st.style.color='#8a5a00';}
+  try{
+    const c=getCloudConfig();
+    if(!c)throw new Error('Supabase configuration নেই');
+    const x=stories[i];
+    await sbFetch('golpo_ghor_stories?on_conflict=id',{
+      method:'POST',
+      headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify({id:x.id,title:x.title,episode:x.episode,access:x.access||'free',
+        price:x.price||null,audio_url:x.audio||null,image_url:x.image||null,
+        content:ggCloudContent(x.content,false),updated_at:x.updatedAt})
+    });
+    if(st){st.textContent='✅ গল্পটি এখন পাঠকদের কাছে লুকানো আছে।';st.style.color='#20824a';}
+  }catch(e){
+    if(st){st.textContent='⚠️ Local-এ Unpublish হয়েছে, কিন্তু Cloud-এ পরিবর্তন যায়নি: '+e.message;st.style.color='#b42318';}
+  }
 }
 async function deleteStory(id){
   const x=getStories().find(s=>s.id===id);if(!x)return;
@@ -1912,7 +2049,7 @@ function sortEpisodes(a){
     return String(x.episode||'').localeCompare(String(y.episode||''),'bn');
   });
 }
-function renderAdminStories(){const box=document.getElementById('adminStoryList'),a=sortEpisodes(getStories());if(!a.length){box.innerHTML='<div style="padding:15px;color:#777">এখনও কোনো নতুন পর্ব সংরক্ষিত নেই।</div>';return}box.innerHTML=a.map(x=>`<div style="padding:14px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap"><div>${x.image?`<img src="${escapeAttr(x.image)}" style="width:44px;height:44px;object-fit:cover;border-radius:8px;vertical-align:middle;margin-right:8px">`:''}<b>${escapeHtml(x.title)}</b> — ${escapeHtml(x.episode)} <span class="${x.access==='free'?'free':'lock'}">${x.access==='free'?'🆓 Free':'🔒 Premium'}</span>${cleanStoryPrice(x)?` • ₹${escapeHtml(cleanStoryPrice(x))}`:''}${storyCategory(x)==='poem'?' • 📝 কবিতা':' • 📖 গল্প'}${x.audio?' • 🎧 Audio':''}</div><div><button class="btn" style="background:#1769aa;color:#fff;border:0;font-size:17px;font-weight:800;padding:12px 24px;min-width:115px;border-radius:12px;box-shadow:0 3px 8px rgba(0,0,0,.18)" onclick="editStory('${encodeURIComponent(x.id)}')">✏️ EDIT</button> <button class="btn ghost" style="background:#b42318;color:#fff" onclick="deleteStory('${x.id}')">🗑️ Delete</button></div></div>`).join('')}
+function renderAdminStories(){const box=document.getElementById('adminStoryList'),a=sortEpisodes(getStories());if(!a.length){box.innerHTML='<div style="padding:15px;color:#777">এখনও কোনো নতুন পর্ব সংরক্ষিত নেই।</div>';return}box.innerHTML=a.map(x=>`<div style="padding:14px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap"><div>${x.image?`<img src="${escapeAttr(x.image)}" style="width:44px;height:44px;object-fit:cover;border-radius:8px;vertical-align:middle;margin-right:8px">`:''}<b>${escapeHtml(x.title)}</b> — ${escapeHtml(x.episode)} <span class="${x.access==='free'?'free':'lock'}">${x.access==='free'?'🆓 Free':'🔒 Premium'}</span>${cleanStoryPrice(x)?` • ₹${escapeHtml(cleanStoryPrice(x))}`:''}${storyCategory(x)==='poem'?' • 📝 কবিতা':' • 📖 গল্প'}${x.audio?' • 🎧 Audio':''}</div><div><button class="btn" style="background:#1769aa;color:#fff;border:0;font-size:17px;font-weight:800;padding:12px 24px;min-width:115px;border-radius:12px;box-shadow:0 3px 8px rgba(0,0,0,.18)" onclick="editStory('${encodeURIComponent(x.id)}')">✏️ EDIT</button> <button class="btn ghost" style="background:#b42318;color:#fff" onclick="deleteStory('${x.id}')">🗑️ Delete</button> ${ggPublishButton(x)}</div></div>`).join('')}
 function escapeAttr(v){return String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;',"\"":'&quot;'}[c]))}
 
 function closeEpisodePicker(){
@@ -1921,8 +2058,8 @@ function closeEpisodePicker(){
   document.body.style.overflow='';
 }
 function openEpisodePicker(title){
-  const all=getStories();
-  if(!all.length){alert('এখনও কোনো পর্ব প্রকাশিত হয়নি।');return;}
+  const all=getStories().filter(ggIsPublished);
+  if(!all.length){alert('এখনও কোনো পর্ব Publish করা হয়নি।');return;}
   const groups=new Map();
   all.forEach(function(s){
     const key=String(s.title||'').trim().toLowerCase();
@@ -1988,16 +2125,17 @@ function openLiteratureFolder(c){
 function renderPublicEpisodes(folderType){
   const box=document.getElementById('publicEpisodes');if(!box)return;
   const views=getStoryViews(),all=getStories(),folder=folderType||window.ggSelectedLiteratureFolder||'story';
+  const publicAll=all.filter(ggIsPublished);
   const byTitle=new Map();
-  all.forEach(function(s){const k=String(s.title||'').trim().toLowerCase();if(!k)return;const p=byTitle.get(k);if(!p||String(s.updatedAt||'')>String(p.updatedAt||''))byTitle.set(k,s);});
+  publicAll.forEach(function(s){const k=String(s.title||'').trim().toLowerCase();if(!k)return;const p=byTitle.get(k);if(!p||String(s.updatedAt||'')>String(p.updatedAt||''))byTitle.set(k,s);});
   const a=Array.from(byTitle.values()).filter(s=>storyCategory(s)===folder).sort(function(x,y){
     const key=v=>String(v.title||'').trim().toLowerCase();
-    const vx=all.filter(s=>key(s)===key(x)).reduce((n,s)=>n+Number(views[s.id]||0),0);
+    const vx=publicAll.filter(s=>key(s)===key(x)).reduce((n,s)=>n+Number(views[s.id]||0),0);
     const vy=all.filter(s=>key(s)===key(y)).reduce((n,s)=>n+Number(views[s.id]||0),0);return vy-vx;
   });
   updateLiteratureFolderCounts();
   if(!a.length){box.innerHTML='<div style="grid-column:1/-1;padding:24px;text-align:center;color:#75685e;background:#fff;border:1px solid #eadfce;border-radius:16px">এই ফোল্ডারে এখনো কোনো '+(folder==='poem'?'কবিতা':'গল্প')+' নেই।</div>';return;}
-  function viewsFor(s){const k=String(s.title||'').trim().toLowerCase();return all.filter(x=>String(x.title||'').trim().toLowerCase()===k).reduce((n,x)=>n+Number(views[x.id]||0),0)}
+  function viewsFor(s){const k=String(s.title||'').trim().toLowerCase();return publicAll.filter(x=>String(x.title||'').trim().toLowerCase()===k).reduce((n,x)=>n+Number(views[x.id]||0),0)}
   const max=Math.max(0,...a.map(viewsFor)),most=a.find(x=>viewsFor(x)===max),mostId=most&&max>0?most.id:null;
   box.innerHTML=a.map(x=>{
     const locked=x.access==='premium'&&!premiumIsActive(),isMost=x.id===mostId,count=viewsFor(x);
@@ -2148,7 +2286,7 @@ window.addEventListener('load',()=>{
     const story={
       id:'story_'+Date.now(),
       title:d.title,episode:d.episode||'',access:'free',price:'',
-      audio:'',content:d.content,updatedAt:publishAt,publishAt,original:false
+      audio:'',content:d.content,updatedAt:publishAt,publishAt,original:false,published:true
     };
     stories.unshift(story); setStories(stories);
     try{ await sbFetch('golpo_ghor_stories?on_conflict=id',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({
