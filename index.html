@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-<meta name="google-site-verification" content="aJOOwBDtCSbvm-X-sSF-gCs9Ba_z3KgH2Kx3EqqXyIU" />
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>গল্প ঘর — বাংলা গল্প, কবিতা ও ধারাবাহিক সাহিত্য</title>
@@ -21,6 +20,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="গল্প ঘর — বাংলা গল্প, কবিতা ও ধারাবাহিক সাহিত্য">
 <meta name="twitter:description" content="বাংলা গল্প, কবিতা ও ধারাবাহিক সাহিত্য পড়ুন গল্প ঘরে।">
+<meta name="twitter:image" content="https://galpoghar.github.io/GalpoGhar/">
+<script id="ggStorySchema" type="application/ld+json"></script>
 
 <script type="application/ld+json">
 {
@@ -1062,7 +1063,10 @@ window.addEventListener('load',function(){
     const el=document.getElementById(id);
     if(el){el.addEventListener('input',scheduleAutoDraftSave);el.addEventListener('change',scheduleAutoDraftSave);}
   });
-  setTimeout(autoCloudInitialSync,800);
+  setTimeout(async function(){
+    try{await autoCloudInitialSync();}catch(e){}
+    try{ggOpenStoryFromUrl();}catch(e){}
+  },800);
 });
 
 const GG_AUTHOR_KEY='golpoGhorAuthorProfileV1';
@@ -1744,7 +1748,82 @@ function initStoryCarousel(){
   buildDots();start();
 }
 
-function showReader(id){
+/* ===== SEO: crawlable story URLs (?story=ID) ===== */
+const GG_SITE_URL='https://galpoghar.github.io/GalpoGhar/';
+function ggStoryUrl(id){
+  return GG_SITE_URL+'?story='+encodeURIComponent(String(id||''));
+}
+function ggMetaText(v,max){
+  const t=String(v||'').replace(/\s+/g,' ').trim();
+  return t.length>max ? t.slice(0,max-1)+'…' : t;
+}
+function ggSetMeta(selector,attr,value){
+  const el=document.querySelector(selector);
+  if(el) el.setAttribute(attr,value);
+}
+function ggApplyStorySEO(x){
+  if(!x){
+    document.title='গল্প ঘর — বাংলা গল্প, কবিতা ও ধারাবাহিক সাহিত্য';
+    ggSetMeta('meta[name="description"]','content','গল্প ঘর — বাংলা গল্প, কবিতা ও ধারাবাহিক সাহিত্য পড়ার অনলাইন প্ল্যাটফর্ম।');
+    ggSetMeta('link[rel="canonical"]','href',GG_SITE_URL);
+    ggSetMeta('meta[property="og:type"]','content','website');
+    ggSetMeta('meta[property="og:title"]','content',document.title);
+    ggSetMeta('meta[property="og:description"]','content','বাংলা গল্প, কবিতা ও ধারাবাহিক সাহিত্য পড়ুন গল্প ঘরে।');
+    ggSetMeta('meta[property="og:url"]','content',GG_SITE_URL);
+    ggSetMeta('meta[name="twitter:title"]','content',document.title);
+    ggSetMeta('meta[name="twitter:description"]','content','বাংলা গল্প, কবিতা ও ধারাবাহিক সাহিত্য পড়ুন গল্প ঘরে।');
+    const sc=document.getElementById('ggStorySchema'); if(sc) sc.textContent='';
+    return;
+  }
+  const title=String(x.title||'গল্প ঘর').trim() || 'গল্প ঘর';
+  const description=ggMetaText(ggLocalContent(x.content||''),160) || ('বাংলা '+(storyCategory(x)==='poem'?'কবিতা':'গল্প')+' — '+title);
+  const url=ggStoryUrl(x.id);
+  const image=x.image||'';
+  document.title=title+' — গল্প ঘর';
+  ggSetMeta('meta[name="description"]','content',description);
+  ggSetMeta('link[rel="canonical"]','href',url);
+  ggSetMeta('meta[property="og:type"]','content','article');
+  ggSetMeta('meta[property="og:title"]','content',title+' — গল্প ঘর');
+  ggSetMeta('meta[property="og:description"]','content',description);
+  ggSetMeta('meta[property="og:url"]','content',url);
+  ggSetMeta('meta[name="twitter:title"]','content',title+' — গল্প ঘর');
+  ggSetMeta('meta[name="twitter:description"]','content',description);
+  if(image){
+    ggSetMeta('meta[property="og:image"]','content',image);
+    ggSetMeta('meta[name="twitter:image"]','content',image);
+  }
+  const sc=document.getElementById('ggStorySchema');
+  if(sc){
+    sc.textContent=JSON.stringify({
+      '@context':'https://schema.org',
+      '@type':storyCategory(x)==='poem'?'CreativeWork':'Article',
+      'headline':title,
+      'description':description,
+      'url':url,
+      'inLanguage':'bn-IN',
+      'isPartOf':{'@type':'WebSite','name':'গল্প ঘর','url':GG_SITE_URL},
+      ...(image?{'image':[image]}:{})
+    });
+  }
+}
+function ggStoryIdFromUrl(){
+  try{return new URL(window.location.href).searchParams.get('story')||'';}catch(e){return '';}
+}
+function ggOpenStoryFromUrl(){
+  const id=ggStoryIdFromUrl();
+  if(!id)return false;
+  const x=getStories().find(s=>String(s.id)===String(id));
+  if(!x)return false;
+  if(x.published===false && localStorage.getItem('ggAdminLoggedIn')!=='1')return false;
+  ggApplyStorySEO(x);
+  showReader(id,true);
+  return true;
+}
+function ggMakeStoryLink(id){
+  return ggStoryUrl(id);
+}
+
+function showReader(id,fromSeoUrl){
   if(!id)return;
   const x=getStories().find(s=>String(s.id)===String(id));
   if(!x){alert('এই গল্পটি পাওয়া যাচ্ছে না।');return;}
@@ -1754,8 +1833,11 @@ function showReader(id){
   }
   if(x.access==='premium' && !premiumIsActive()){showPremiumLock(id);return;}
   recordStoryView(id); window.currentStoryId=id;
+  ggApplyStorySEO(x);
   try{
-    history.pushState({page:'story',id:String(id)},'', '#story-'+encodeURIComponent(String(id)));
+    const seoUrl=ggStoryUrl(id);
+    if(fromSeoUrl) history.replaceState({page:'story',id:String(id)},'',seoUrl);
+    else history.pushState({page:'story',id:String(id)},'',seoUrl);
   }catch(e){}
   const home=document.getElementById('home'), panel=document.getElementById('adminPanel'), read=document.getElementById('read');
   if(home)home.style.display='none'; if(panel)panel.style.display='none'; if(!read)return;
@@ -1805,7 +1887,13 @@ function showHome(fromBack){
     }
   }
 
-  if(!fromBack && location.hash){history.replaceState(null,'',location.pathname+location.search);}
+  if(!fromBack){
+    try{
+      const u=new URL(location.href); u.searchParams.delete('story'); u.hash='';
+      history.replaceState(null,'',u.pathname+(u.search||''));
+    }catch(e){}
+  }
+  ggApplyStorySEO(null);
   window.scrollTo(0,0);
 }
 function openAdmin(){
@@ -2176,7 +2264,7 @@ function renderPublicEpisodes(folderType){
   box.innerHTML=a.map(x=>{
     const locked=x.access==='premium'&&!premiumIsActive(),isMost=x.id===mostId,count=viewsFor(x);
     const tid=encodeURIComponent(String(x.title||'')),id=encodeURIComponent(String(x.id||''));
-    const actions='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="story-card-action" type="button" data-story-id="'+id+'">'+(folder==='poem'?'📝 কবিতাটি':'📖 গল্পটি')+' পড়ুন →</button><button class="story-card-action story-episodes-btn" type="button" data-story-title="'+tid+'">📚 সব পর্ব</button></div>';
+    const actions='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><a class="story-card-action" href="'+ggMakeStoryLink(x.id)+'" data-story-id="'+id+'">'+(folder==='poem'?'📝 কবিতাটি':'📖 গল্পটি')+' পড়ুন →</a><button class="story-card-action story-episodes-btn" type="button" data-story-title="'+tid+'">📚 সব পর্ব</button></div>';
     const img=x.image?'<img class="story-card-image" src="'+escapeAttr(x.image)+'" alt="'+escapeAttr(x.title)+'">':'<div class="story-card-image"></div>',price=cleanStoryPrice(x);
     return '<div class="episode '+(locked?'premium-locked ':'')+(isMost?'most-read-card':'')+'">'+(isMost?'<span class="most-read-badge">🔥 সর্বাধিক পঠিত</span>':'')+img+'<div class="story-card-body"><div class="story-card-title">'+escapeHtml(x.title)+'</div><div class="story-card-meta">'+(locked?'🔒 Premium':'🆓 Free')+(price?' • ₹'+escapeHtml(price):'')+(count?' • 👁 '+count:'')+'</div>'+actions+'</div></div>';
   }).join('');
@@ -2203,6 +2291,7 @@ loadCloudConfig();
 function escapeHtml(v){return String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
 window.addEventListener('load',()=>{
   try{restoreAdminSession()}catch(e){}
+  try{ggOpenStoryFromUrl();}catch(e){}
   try{initStoryComments()}catch(e){}
   try{initReaderComments()}catch(e){}
   try{loadCloudConfig()}catch(e){}
