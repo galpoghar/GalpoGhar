@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://galpoghar.github.io/GalpoGhar/sitemap.xml
