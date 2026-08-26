@@ -1065,7 +1065,7 @@ window.addEventListener('load',function(){
   });
   setTimeout(async function(){
     try{await autoCloudInitialSync();}catch(e){}
-    try{ggOpenStoryFromUrl();}catch(e){}
+    try{ggOpenStoryFromUrl().catch(()=>{});}catch(e){}
   },800);
 });
 
@@ -1809,10 +1809,34 @@ function ggApplyStorySEO(x){
 function ggStoryIdFromUrl(){
   try{return new URL(window.location.href).searchParams.get('story')||'';}catch(e){return '';}
 }
-function ggOpenStoryFromUrl(){
+async function ggOpenStoryFromUrl(){
   const id=ggStoryIdFromUrl();
   if(!id)return false;
-  const x=getStories().find(s=>String(s.id)===String(id));
+
+  // IMPORTANT for Google: a direct ?story=ID URL must work even when
+  // this browser has no LocalStorage copy of the story. Fetch ONLY this
+  // story from Supabase instead of requiring the full story database.
+  let x=getStories().find(s=>String(s.id)===String(id));
+  if(!x){
+    try{
+      const rows=await sbFetch('golpo_ghor_stories?id=eq.'+encodeURIComponent(String(id))+'&select=id,title,episode,access,price,audio_url,image_url,content,updated_at&limit=1');
+      if(Array.isArray(rows) && rows[0]){
+        const r=rows[0];
+        const rawContent=String(r.content||'');
+        x={
+          id:r.id,title:r.title||'',episode:r.episode||'',access:r.access||'free',
+          price:r.price||'',audio:r.audio_url||'',image:r.image_url||'',
+          content:ggLocalContent(rawContent),
+          published:rawContent.indexOf(GG_UNPUBLISHED_MARKER)!==0,
+          updatedAt:r.updated_at||new Date().toISOString()
+        };
+        const local=getStories().filter(s=>String(s.id)!==String(id));
+        setStories([x].concat(local));
+      }
+    }catch(e){
+      console.warn('Direct story fetch failed:',e);
+    }
+  }
   if(!x)return false;
   if(x.published===false && localStorage.getItem('ggAdminLoggedIn')!=='1')return false;
   ggApplyStorySEO(x);
@@ -2291,7 +2315,7 @@ loadCloudConfig();
 function escapeHtml(v){return String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
 window.addEventListener('load',()=>{
   try{restoreAdminSession()}catch(e){}
-  try{ggOpenStoryFromUrl();}catch(e){}
+  try{ggOpenStoryFromUrl().catch(()=>{});}catch(e){}
   try{initStoryComments()}catch(e){}
   try{initReaderComments()}catch(e){}
   try{loadCloudConfig()}catch(e){}
